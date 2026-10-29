@@ -10,7 +10,6 @@ import { greeting as memoGreeting } from '@/lib/avatar/scripts';
 import { DailyBrief, type Brief } from './DailyBrief';
 import { RecentMemories } from './RecentMemories';
 import { UpcomingIntents } from './UpcomingIntents';
-import { QuickCapture } from './QuickCapture';
 import { IosInstallGuide } from './IosInstallGuide';
 
 function greetingPart() {
@@ -107,12 +106,6 @@ export function DashboardContent() {
         <section>
           <p className="eyebrow mb-4">Recently saved</p>
           <RecentMemories />
-        </section>
-
-        {/* Capture */}
-        <section>
-          <p className="eyebrow mb-4">Capture</p>
-          <QuickCapture />
         </section>
       </div>
     </div>

@@ -199,7 +199,7 @@ export default function Index() {
 
       {/* CTA */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 pb-24">
-        <div className="card-lit relative overflow-hidden px-8 py-14 text-center sm:px-14">
+        <div className="beam card-lit relative px-8 py-14 text-center sm:px-14">
           <div className="pointer-events-none absolute inset-0 aurora opacity-70" />
           <p className="eyebrow relative mb-4">Your second brain</p>
           <h2 className="relative font-display text-5xl tracking-tight sm:text-6xl">
