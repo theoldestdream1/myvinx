@@ -9,6 +9,13 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+import { AuthProvider } from "@/hooks/useAuth";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { AvatarHost } from "@/components/avatar/AvatarHost";
+import { OutboxFlusher } from "@/components/capture/OutboxFlusher";
+import { GlobalCapture } from "@/components/capture/GlobalCapture";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -77,15 +84,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "Vinx" },
+      { name: "description", content: "Save anything worth remembering. Find it later by describing it." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary" },
+      { name: "theme-color", content: "#0a0a0a" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Vinx" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
     ],
     links: [
       {
@@ -93,6 +101,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -103,7 +119,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -120,8 +136,37 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthProvider>
+        <TooltipProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <Toaster />
+          <ClientOnly>
+            <AvatarHost />
+            <OutboxFlusher />
+            <GlobalCapture />
+            <ServiceWorkerRegistrar />
+          </ClientOnly>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+// Service worker: push notifications, share target, offline shell.
+// Skipped in dev and inside editor preview iframes so it never caches stale modules.
+function ServiceWorkerRegistrar() {
+  useEffect(() => {
+    let inIframe = true;
+    try {
+      inIframe = window.self !== window.top;
+    } catch {
+      inIframe = true;
+    }
+    const isPreviewHost = /(^|\.)lovableproject\.com$|^id-preview--/.test(window.location.hostname);
+    if ("serviceWorker" in navigator && import.meta.env.PROD && !inIframe && !isPreviewHost) {
+      navigator.serviceWorker.register("/sw.js").catch((e) => console.warn("SW registration failed", e));
+    }
+  }, []);
+  return null;
 }
