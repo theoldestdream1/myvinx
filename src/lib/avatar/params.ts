@@ -38,7 +38,7 @@ export const NEUTRAL: FaceParams = {
 
 export type ExpressionName =
   | 'neutral' | 'happy' | 'excited' | 'thinking' | 'curious'
-  | 'surprised' | 'concerned' | 'listening' | 'focused';
+  | 'surprised' | 'concerned' | 'listening' | 'focused' | 'sassy';
 
 export const EXPRESSIONS: Record<ExpressionName, Partial<FaceParams>> = {
   neutral: {},
