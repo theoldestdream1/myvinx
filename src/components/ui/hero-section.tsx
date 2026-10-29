@@ -49,7 +49,7 @@ export const FinancialHero = ({
 }: FinancialHeroProps) => {
   const gridBackgroundStyle = {
     backgroundImage:
-      "linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px)",
+      "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(to right, var(--border) 1px, transparent 1px)",
     backgroundSize: "3rem 3rem",
   };
 
