@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { GemMark } from '@/components/layout/GemMark';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Bell } from 'lucide-react';
+import { VCompanion } from '@/components/v/VCompanion';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -37,6 +38,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {children}
       </main>
       {isMobile && <BottomNav />}
+      <VCompanion />
     </div>
   );
 }
