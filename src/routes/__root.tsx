@@ -13,7 +13,6 @@ import { ClientOnly } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { AvatarHost } from "@/components/avatar/AvatarHost";
 import { OutboxFlusher } from "@/components/capture/OutboxFlusher";
 import { GlobalCapture } from "@/components/capture/GlobalCapture";
 
@@ -142,7 +141,6 @@ function RootComponent() {
           <Outlet />
           <Toaster />
           <ClientOnly>
-            <AvatarHost />
             <OutboxFlusher />
             <GlobalCapture />
             <ServiceWorkerRegistrar />

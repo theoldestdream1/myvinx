@@ -2,17 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Screen from "@/screens/Index";
 import { VOpener, shouldShowOpener } from "@/components/opener/VOpener";
-import { RestingV } from "@/components/opener/RestingV";
 
 function Landing() {
   const [show, setShow] = useState(false);
-  const [rest, setRest] = useState(false);
-  useEffect(() => { const s = shouldShowOpener(); setShow(s); setRest(!s); }, []);
+  useEffect(() => { setShow(shouldShowOpener()); }, []);
   return (
     <>
       <Screen />
-      {show && <VOpener onDone={() => { setShow(false); setRest(true); }} />}
-      {rest && <RestingV />}
+      {show && <VOpener onDone={() => setShow(false)} />}
     </>
   );
 }

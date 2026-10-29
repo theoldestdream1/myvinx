@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Calendar, MapPin, MessageCircle, User } from 'lucide-react';
+import { TaskCard } from './TaskCard';
 
 const triggerIcons: Record<string, typeof Calendar> = {
   date: Calendar,
@@ -28,54 +27,51 @@ export function UpcomingIntents() {
     },
   });
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="h-28 card-ghost animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!intents?.length) {
+    return (
+      <p className="font-display italic text-xl text-muted-foreground">
+        Nothing on the horizon yet.
+      </p>
+    );
+  }
+
   return (
-    <Card className="card-ghost">
-      <CardHeader>
-        <p className="eyebrow mb-1">Coming up</p>
-        <CardTitle className="font-display text-2xl tracking-tight">Upcoming intents</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : intents?.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-8">
-            No pending intents. Your AI will detect them from memories.
-          </p>
-        ) : (
-          intents?.map((intent) => {
-            const Icon = triggerIcons[intent.trigger_type] || Calendar;
-            return (
-              <div
-                key={intent.id}
-                className="p-3.5 rounded-xl bg-muted/20 border border-border/40 hover:border-accent/40 hover:shadow-[0_0_24px_-12px] hover:shadow-accent/25 transition-all duration-300"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-accent/10">
-                    <Icon className="w-4 h-4 text-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground line-clamp-2">{intent.intent_text}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="text-xs bg-accent/10 text-accent border-accent/30">
-                        {intent.trigger_type}
-                      </Badge>
-                      {intent.trigger_date && (
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(intent.trigger_date), 'MMM d, yyyy')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {intents.map((intent) => {
+        const Icon = triggerIcons[intent.trigger_type] || Calendar;
+        return (
+          <TaskCard
+            key={intent.id}
+            title={intent.intent_text}
+            chip={{ label: intent.trigger_type }}
+            meta={
+              <>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-primary/25 bg-primary/15">
+                  <Icon className="h-3 w-3 text-primary" />
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {intent.trigger_date ? format(new Date(intent.trigger_date), 'MMM d, yyyy') : 'When the moment comes'}
+                </span>
+              </>
+            }
+            status={
+              <>
+                V will bring this up <strong className="text-foreground">when it matters</strong>
+              </>
+            }
+          />
+        );
+      })}
+    </div>
   );
 }

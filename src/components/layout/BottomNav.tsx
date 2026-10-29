@@ -32,20 +32,20 @@ export function BottomNav() {
               to={item.path}
               className={cn(
                 'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-[60px]',
-                isCapture && 'relative -mt-6',
+                isCapture && 'relative -mt-7',
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {isCapture ? (
-                <div className="w-13 h-13 rounded-full bg-primary flex items-center justify-center shadow-[0_0_28px_-4px] shadow-primary/60 ring-4 ring-background">
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-[0_0_36px_-4px] shadow-primary/70 ring-4 ring-background">
                   <item.icon className="w-6 h-6 text-primary-foreground" />
                 </div>
               ) : (
                 <item.icon className={cn('w-5 h-5', isActive && 'text-primary drop-shadow-[0_0_8px_oklch(0.78_0.115_240/0.6)]')} />
               )}
-              <span className={cn('text-[10px] font-mono uppercase tracking-wider', isCapture && 'mt-1')}>
+              <span className={cn('text-xs font-medium', isCapture && 'mt-1')}>
                 {item.label}
               </span>
             </NavLink>
