@@ -45,7 +45,7 @@ function PhoneMock() {
           </p>
           {/* week bar */}
           <div className="relative mt-4 h-1.5 rounded-full bg-gradient-to-r from-primary via-primary/50 to-muted/50">
-            <span className="absolute left-[35%] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px] shadow-primary" />
+            <span className="absolute left-[35%] top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px] shadow-silver" />
           </div>
           <div className="mt-2.5 flex items-center justify-between font-mono text-[8.5px] uppercase tracking-[0.14em] text-muted-foreground">
             <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-primary" />2 due today</span>
@@ -54,7 +54,7 @@ function PhoneMock() {
           </div>
           {/* needs attention */}
           <p className="mt-6 font-mono text-[8.5px] uppercase tracking-[0.18em] text-muted-foreground">Needs attention</p>
-          <div className="mt-2.5 rounded-2xl border border-primary/30 bg-card/70 p-3.5 shadow-[0_0_28px_-10px] shadow-primary/40">
+          <div className="mt-2.5 rounded-2xl border border-primary/30 bg-card/70 p-3.5 shadow-[0_0_28px_-10px] shadow-silver/40">
             <div className="flex items-start gap-2.5">
               <span className="mt-0.5 h-4 w-4 flex-shrink-0 rounded-md border-2 border-muted-foreground/40" />
               <div className="min-w-0 flex-1">
@@ -88,7 +88,7 @@ function PhoneMock() {
           <div className="mt-5 flex items-center justify-around border-t border-border/40 pt-3.5 text-muted-foreground">
             <Home className="h-4 w-4 text-primary" />
             <Clock className="h-4 w-4" />
-            <span className="-mt-7 flex h-11 w-11 items-center justify-center rounded-full bg-primary shadow-[0_0_24px_-2px] shadow-primary/70 ring-4 ring-background">
+            <span className="-mt-7 flex h-11 w-11 items-center justify-center rounded-full bg-primary shadow-[0_0_24px_-2px] shadow-silver/70 ring-4 ring-background">
               <Plus className="h-5 w-5 text-primary-foreground" />
             </span>
             <Search className="h-4 w-4" />
@@ -151,7 +151,7 @@ export default function Index() {
             remember — even vaguely — and Vinx finds it.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button asChild size="lg" className="rounded-full bg-primary px-7 text-primary-foreground shadow-[0_0_36px_-8px] shadow-primary/50 hover:bg-primary/90">
+            <Button asChild size="lg" className="rounded-full bg-primary px-7 text-primary-foreground hover:bg-primary/90">
               <Link to="/auth">Start remembering</Link>
             </Button>
             <Button asChild variant="ghost" size="lg" className="rounded-full text-muted-foreground hover:text-foreground">
@@ -182,10 +182,10 @@ export default function Index() {
           {features.map((f) => (
             <div
               key={f.title}
-              className="card-ghost group p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_40px_-12px] hover:shadow-primary/25"
+              className="card-ghost group p-6 transition-all duration-300 hover:border-silver/25 hover:shadow-[0_0_40px_-12px] hover:shadow-silver/25"
             >
               <div className="mb-6 flex items-center justify-between">
-                <div className="rounded-xl border border-border/60 bg-muted/40 p-2.5 transition-colors group-hover:border-primary/30">
+                <div className="rounded-xl border border-border/60 bg-muted/40 p-2.5 transition-colors group-hover:border-silver/25">
                   <f.icon className="h-5 w-5 text-primary" />
                 </div>
                 <span className="chip">{f.tag}</span>
@@ -208,7 +208,7 @@ export default function Index() {
           <p className="relative mx-auto mt-5 max-w-md text-muted-foreground">
             Save it in seconds. Find it by describing it. Get reminded the moment it matters.
           </p>
-          <Button asChild size="lg" className="relative mt-9 rounded-full bg-primary px-8 text-primary-foreground shadow-[0_0_36px_-8px] shadow-primary/50 hover:bg-primary/90">
+          <Button asChild size="lg" className="relative mt-9 rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90">
             <Link to="/auth">Get started</Link>
           </Button>
         </div>

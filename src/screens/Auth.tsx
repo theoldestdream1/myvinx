@@ -161,7 +161,7 @@ export default function Auth() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-primary text-primary-foreground font-semibold shadow-[0_0_28px_-8px] shadow-primary/50 hover:bg-primary/90 transition-all"
+              className="w-full rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all"
             >
               {loading ? (
                 <span className="flex items-center gap-2">

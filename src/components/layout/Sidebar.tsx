@@ -70,7 +70,7 @@ export function Sidebar() {
               <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-primary drop-shadow-[0_0_8px_oklch(0.78_0.115_240/0.6)]')} />
               {!collapsed && <span className="font-medium">{item.label}</span>}
               {!collapsed && isActive && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
+                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px] shadow-silver" />
               )}
             </NavLink>
           );

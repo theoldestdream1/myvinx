@@ -68,7 +68,7 @@ export function DashboardContent() {
           <div className="mt-8">
             <div className="relative h-1.5 rounded-full bg-gradient-to-r from-primary via-primary/50 to-muted/50">
               <span
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[3px] bg-primary shadow-[0_0_14px] shadow-primary"
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[3px] bg-primary shadow-[0_0_14px] shadow-silver"
                 style={{ left: `${pct}%` }}
               />
             </div>
