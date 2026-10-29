@@ -340,11 +340,7 @@ export function VCompanion() {
             >
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{status}{phase === "listening" ? ` · ${rec.duration}s` : ""}</p>
               {phase === "listening" && (
-                <div className="flex h-6 items-end gap-1" aria-hidden>
-                  {[0.6, 1, 0.8, 1, 0.6].map((m, i) => (
-                    <motion.span key={i} className="w-1.5 rounded-full bg-foreground/80" style={{ height: useTransformSafe(levelSmooth, m) }} />
-                  ))}
-                </div>
+                <LevelBars level={levelSmooth} />
               )}
               <div className="flex gap-2">
                 <button onClick={cancelTell} className="flex items-center gap-1 rounded-full border border-border bg-card/80 px-4 py-2 text-sm text-muted-foreground"><X className="h-4 w-4" />Cancel</button>
@@ -360,9 +356,16 @@ export function VCompanion() {
   );
 }
 
-/** bar height from loudness; a plain function (not a hook) so it is safe inside map */
-function useTransformSafe(v: ReturnType<typeof useSpring>, m: number) {
-  return v.get() >= 0 ? `${Math.max(4, Math.min(24, 4 + v.get() * 40 * m))}px` : "4px";
+function Bar({ level, m }: { level: ReturnType<typeof useSpring>; m: number }) {
+  const height = useTransform(level, (l) => `${Math.max(4, Math.min(24, 4 + l * 40 * m))}px`);
+  return <motion.span className="w-1.5 rounded-full bg-foreground/80" style={{ height }} />;
+}
+function LevelBars({ level }: { level: ReturnType<typeof useSpring> }) {
+  return (
+    <div className="flex h-6 items-end gap-1" aria-hidden>
+      {[0.6, 1, 0.8, 1, 0.6].map((m, i) => <Bar key={i} level={level} m={m} />)}
+    </div>
+  );
 }
 
 export default VCompanion;
