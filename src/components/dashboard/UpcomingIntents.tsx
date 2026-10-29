@@ -29,9 +29,10 @@ export function UpcomingIntents() {
   });
 
   return (
-    <Card className="bg-card/50 border-border/50">
+    <Card className="card-ghost">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Upcoming Intents</CardTitle>
+        <p className="eyebrow mb-1">Coming up</p>
+        <CardTitle className="font-display text-2xl tracking-tight">Upcoming intents</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
@@ -50,7 +51,7 @@ export function UpcomingIntents() {
             return (
               <div
                 key={intent.id}
-                className="p-3 rounded-lg bg-muted/30 border border-border/50 hover:border-accent/30 transition-colors"
+                className="p-3.5 rounded-xl bg-muted/20 border border-border/40 hover:border-accent/40 hover:shadow-[0_0_24px_-12px] hover:shadow-accent/25 transition-all duration-300"
               >
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-accent/10">

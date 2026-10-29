@@ -54,9 +54,10 @@ export function RecentMemories() {
   });
 
   return (
-    <Card className="bg-card/50 border-border/50">
+    <Card className="card-ghost">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Recent Memories</CardTitle>
+        <p className="eyebrow mb-1">Latest saves</p>
+        <CardTitle className="font-display text-2xl tracking-tight">Recent memories</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
@@ -75,7 +76,7 @@ export function RecentMemories() {
             return (
               <div
                 key={memory.id}
-                className="p-3 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors"
+                className="p-3.5 rounded-xl bg-muted/20 border border-border/40 hover:border-primary/30 hover:shadow-[0_0_24px_-12px] hover:shadow-primary/25 transition-all duration-300"
               >
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-muted">
