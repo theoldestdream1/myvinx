@@ -30,12 +30,22 @@ serve(async (req) => {
 
     if (action === "telegram_health") {
       if (!telegramConfigured()) return json({ configured: false });
-      const [username, info] = await Promise.all([botUsername(), tg<any>("getWebhookInfo")]);
-      const url: string = info.result?.url ?? "";
+      let [username, info] = await Promise.all([botUsername(), tg<any>("getWebhookInfo")]);
+      const target = `${Deno.env.get("SUPABASE_URL")}/functions/v1/telegram-webhook`;
+      let url: string = info.result?.url ?? "";
+      // Self-heal: point the bot at our webhook (with the shared secret) if it isn't already.
+      if (url !== target) {
+        const set = await tg("setWebhook", {
+          url: target,
+          secret_token: Deno.env.get("TELEGRAM_WEBHOOK_SECRET"),
+          allowed_updates: ["message", "edited_message", "callback_query"],
+        });
+        if (set.ok) { info = await tg<any>("getWebhookInfo"); url = info.result?.url ?? ""; }
+      }
       return json({
         configured: true,
         bot_username: username,
-        webhook_set: url.endsWith("/functions/v1/telegram-webhook"),
+        webhook_set: url === target,
         pending_update_count: info.result?.pending_update_count ?? null,
         last_error: info.result?.last_error_message ?? null,
       });
