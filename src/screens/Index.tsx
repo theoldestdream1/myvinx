@@ -27,7 +27,7 @@ export default function Index() {
       <header className="container mx-auto flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-            <span className="font-display text-sm font-bold text-primary-foreground">M</span>
+            <span className="font-display text-sm font-bold text-primary-foreground">V</span>
           </div>
           <span className="font-display text-lg font-semibold tracking-tight">Vinx</span>
         </div>

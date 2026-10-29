@@ -89,7 +89,7 @@ export default function Auth() {
       <Card className="w-full max-w-md bg-card/80 glass border-border/50 shadow-card relative z-10">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">M</span>
+            <span className="font-display text-2xl font-bold text-primary-foreground">V</span>
           </div>
           <div>
             <CardTitle className="text-2xl font-bold">

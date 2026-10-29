@@ -40,7 +40,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
         <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-          <span className="font-display text-lg font-bold text-primary-foreground">M</span>
+          <span className="font-display text-lg font-bold text-primary-foreground">V</span>
         </div>
         {!collapsed && (
           <span className="font-display font-bold text-lg text-gradient">Vinx</span>
