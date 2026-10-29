@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Vinx - Silver, Black & Light Blue Theme */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 92%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 92%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
+
+    /* Light Blue - Primary */
+    --primary: 206 91% 68%;
+    --primary-foreground: 0 0% 4%;
+
+    /* Silver - Secondary */
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 0 0% 92%;
+
+    /* Dark Silver */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
+
+    /* Light Blue Accent */
+    --accent: 206 91% 68%;
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 206 91% 68%;
+
+    --radius: 0.75rem;
+
+    /* Memory-specific colors */
+    --memory-pending: 45 90% 55%;
+    --memory-processing: 206 91% 68%;
+    --memory-processed: 145 70% 45%;
+    --memory-failed: 0 72% 51%;
+
+    /* Entity colors */
+    --entity-person: 320 70% 60%;
+    --entity-place: 145 70% 45%;
+    --entity-topic: 206 91% 68%;
+    --entity-organization: 45 90% 55%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(206 91% 68%) 0%, hsl(0 0% 70%) 100%);
+    --gradient-neural: linear-gradient(135deg, hsl(0 0% 4%) 0%, hsl(0 0% 12%) 50%, hsl(0 0% 4%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(206 91% 68% / 0.15) 0%, transparent 70%);
+
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(206 91% 68% / 0.2);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 206 91% 68%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 206 91% 68%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 92%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 92%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 206 91% 68%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 206 91% 68%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 206 91% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  /* Flat, solid styles (no gradients/glows) */
+  .gradient-primary {
+    background: hsl(var(--primary));
+  }
+
+  .gradient-neural {
+    background: hsl(var(--background));
+  }
+
+  .gradient-glow {
+    background: transparent;
+  }
+
+  .glow-primary {
+    box-shadow: none;
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .text-gradient {
+    color: hsl(var(--foreground));
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
