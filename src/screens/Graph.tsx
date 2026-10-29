@@ -135,7 +135,7 @@ export default function Graph() {
                               className={cn('text-sm', entityColors[type] || entityColors.topic)}
                             >
                               {entity.name}
-                              {entity.mention_count > 1 && (
+                              {(entity.mention_count ?? 0) > 1 && (
                                 <span className="ml-1 opacity-70">({entity.mention_count})</span>
                               )}
                             </Badge>
