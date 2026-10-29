@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- The original Vinx codebase (Vite + React Router + Supabase edge functions) lives untouched in `vinx/` as reference source; it is excluded from the app build until migrated into `src/`.

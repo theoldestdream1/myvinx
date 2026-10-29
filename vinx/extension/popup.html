@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Save to V</title>
+<style>
+  body{font:14px system-ui,sans-serif;width:340px;margin:0;padding:12px;color:#111;background:#fff}
+  @media(prefers-color-scheme:dark){body{background:#16161a;color:#eee}textarea{background:#222;color:#eee;border-color:#444}}
+  textarea{width:100%;box-sizing:border-box;min-height:84px;padding:8px;border:1px solid #ccc;border-radius:8px;font:inherit;resize:vertical}
+  .row{display:flex;gap:8px;margin-top:8px}button{flex:1;padding:9px;border:0;border-radius:8px;font:inherit;cursor:pointer;background:#6d5dfc;color:#fff}
+  button.alt{background:#8884;color:inherit}#status{margin-top:8px;min-height:18px;font-size:12px}small{opacity:.7}
+</style></head>
+<body>
+  <textarea id="note" placeholder="Add a note (optional)…" aria-label="Note"></textarea>
+  <div class="row"><button id="page">Save this page</button><button id="shot" class="alt">Screenshot</button></div>
+  <div class="row"><button id="note-only" class="alt">Save note only</button></div>
+  <div id="status" role="status"></div>
+  <small><a href="options.html" id="opts" target="_blank">Settings</a> · Ctrl/Cmd+Enter saves the page</small>
+  <script type="module" src="popup.js"></script>
+</body></html>
