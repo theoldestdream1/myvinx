@@ -11,6 +11,7 @@ export type AvatarEvent =
   | { type: 'say'; text: string; mood?: Mood; priority?: Priority; id?: string }
   | { type: 'emote'; mood: Mood; ms?: number }
   | { type: 'state'; state: 'idle' | 'listening' | 'thinking' }
+  | { type: 'tell' }
   | { type: 'hide' }
   | { type: 'show' };
 
@@ -48,6 +49,8 @@ export const vAgent = {
   thinking: () => emit({ type: 'state', state: 'thinking' }),
   listening: () => emit({ type: 'state', state: 'listening' }),
   idle: () => emit({ type: 'state', state: 'idle' }),
+  /** open V's in-place voice capture from anywhere */
+  tell: () => emit({ type: 'tell' }),
   hide: () => emit({ type: 'hide' }),
   show: () => emit({ type: 'show' }),
 };

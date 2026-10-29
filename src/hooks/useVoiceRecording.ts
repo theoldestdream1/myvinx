@@ -18,6 +18,7 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
   const levelRef = useRef(onLevel); levelRef.current = onLevel;
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
   
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
@@ -113,7 +114,9 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
         }
       };
 
+      cancelledRef.current = false;
       mediaRecorder.onstop = async () => {
+        if (cancelledRef.current) { cleanup(); return; }
         const audioBlob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
         await processAudio(audioBlob);
         cleanup();
@@ -179,6 +182,7 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
   }, []);
 
   const cancelRecording = useCallback(() => {
+    cancelledRef.current = true;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
