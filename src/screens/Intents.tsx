@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useEffect } from 'react';
 import { useNavigate } from "@/lib/router-compat";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -131,11 +132,8 @@ export default function Intents() {
     <AppLayout>
       <div className="p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Intents & Reminders</h1>
-            <p className="text-muted-foreground mt-1">
-              Future actions detected from your memories
-            </p>
+          <div>
+            <PageHeader eyebrow="Reminders" title={<>What V is <span className="serif-accent">holding</span> for you</>} sub="Future actions V picked up from your memories." />
           </div>
 
           {isLoading ? (

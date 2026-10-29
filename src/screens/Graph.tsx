@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useEffect } from 'react';
 import { useNavigate } from "@/lib/router-compat";
 import { useQuery } from '@tanstack/react-query';
@@ -87,11 +88,8 @@ export default function Graph() {
     <AppLayout>
       <div className="p-6 lg:p-8">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Knowledge Graph</h1>
-            <p className="text-muted-foreground mt-1">
-              Entities and relationships extracted from your memories
-            </p>
+          <div>
+            <PageHeader eyebrow="Graph" title={<>Everything, <span className="serif-accent">connected</span></>} sub="People, places and topics from your memories." />
           </div>
 
           {isLoading ? (
