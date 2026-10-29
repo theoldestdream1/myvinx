@@ -26,7 +26,7 @@
   -webkit-tap-highlight-color: transparent;
   filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.35));
 }
-.mm-stage:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 4px; }
+.mm-stage:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 .mm-stage svg { display: block; overflow: visible; }
 .mm-stage [data-ref='halo'] { transform-box: view-box; transform-origin: 100px 112px; animation: mm-spin 48s linear infinite; }
 
@@ -36,9 +36,9 @@
   max-width: min(300px, calc(100vw - 24px));
   padding: 10px 14px;
   border-radius: 16px 16px 4px 16px;
-  background: hsl(var(--card));
-  color: hsl(var(--card-foreground));
-  border: 1px solid hsl(var(--border));
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
   font-size: 14px;
   line-height: 1.45;
@@ -49,12 +49,12 @@
 .mm-actions { display: flex; gap: 8px; margin-top: 8px; }
 .mm-chip {
   font-size: 12px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
-  border: 1px solid hsl(var(--border)); background: hsl(var(--muted)); color: hsl(var(--foreground));
+  border: 1px solid var(--border); background: var(--muted); color: var(--foreground);
 }
-.mm-chip:hover { border-color: hsl(var(--primary)); }
-.mm-chip.mm-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: transparent; }
+.mm-chip:hover { border-color: var(--primary); }
+.mm-chip.mm-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
 .mm-dots { display: inline-flex; gap: 4px; padding: 4px 2px; }
-.mm-dots i { width: 6px; height: 6px; border-radius: 50%; background: hsl(var(--primary)); animation: mm-dot 1s ease-in-out infinite; }
+.mm-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: mm-dot 1s ease-in-out infinite; }
 .mm-dots i:nth-child(2) { animation-delay: 0.15s; }
 .mm-dots i:nth-child(3) { animation-delay: 0.3s; }
 
@@ -63,28 +63,28 @@
   min-width: 196px;
   padding: 6px;
   border-radius: 14px;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.4);
   animation: mm-bubble-in 0.16s ease-out both;
 }
 .mm-menu button {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
   padding: 8px 10px; border: 0; border-radius: 9px; background: none; cursor: pointer;
-  color: hsl(var(--foreground)); font-size: 13px;
+  color: var(--foreground); font-size: 13px;
 }
-.mm-menu button:hover, .mm-menu button:focus-visible { background: hsl(var(--muted)); outline: none; }
+.mm-menu button:hover, .mm-menu button:focus-visible { background: var(--muted); outline: none; }
 .mm-menu button[disabled] { opacity: 0.5; cursor: not-allowed; }
-.mm-menu .mm-on { margin-left: auto; font-size: 11px; color: hsl(var(--primary)); }
+.mm-menu .mm-on { margin-left: auto; font-size: 11px; color: var(--primary); }
 
 .mm-orb {
   pointer-events: auto;
-  width: 48px; height: 48px; border-radius: 50%; border: 1px solid hsl(var(--primary) / 0.6); cursor: pointer;
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid color-mix(in oklch, var(--primary) calc(0.6 * 100%), transparent); cursor: pointer;
   background: radial-gradient(circle at 50% 45%, #8fe8ff 0, #38d5ff 28%, #0b1a38 62%);
-  box-shadow: 0 0 22px hsl(var(--primary) / 0.45);
+  box-shadow: 0 0 22px color-mix(in oklch, var(--primary) calc(0.45 * 100%), transparent);
   animation: mm-pop 0.5s cubic-bezier(0.2, 1.35, 0.35, 1) both, mm-pulse 3.2s ease-in-out 0.5s infinite;
 }
-.mm-orb:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
+.mm-orb:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 
 @keyframes mm-pop { 0% { opacity: 0; transform: translateY(26px) scale(0.55); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
 @keyframes mm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
