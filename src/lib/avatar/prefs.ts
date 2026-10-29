@@ -10,7 +10,7 @@ export interface AvatarPrefs {
 }
 
 export const DEFAULT_PREFS: AvatarPrefs = {
-  enabled: true, voice: false, captions: true, introSeen: false, minimized: false, lastGreetingDay: '',
+  enabled: true, voice: true, captions: true, introSeen: false, minimized: false, lastGreetingDay: '',
 };
 
 const KEY = 'vinx.avatar.v1';

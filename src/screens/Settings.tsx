@@ -36,7 +36,7 @@ type PanelKey = 'notifications' | 'install' | 'v' | 'telegram' | 'email' | 'cale
 const PANELS: Record<PanelKey, { title: string; desc: string; body: () => ReactNode }> = {
   notifications: { title: 'Notifications', desc: 'How V reaches you when a reminder lands.', body: () => <NotificationCard /> },
   install: { title: 'Install Vinx', desc: 'Keep V one tap away on this device.', body: () => <InstallCard /> },
-  v: { title: 'V, your companion', desc: 'How often V moves around and talks.', body: () => <AvatarCard /> },
+  v: { title: 'V, your companion', desc: 'Her personality, voice and captions.', body: () => <AvatarCard /> },
   telegram: { title: 'Telegram', desc: 'Send memories to V from a chat.', body: () => <TelegramCard /> },
   email: { title: 'Email in', desc: 'Forward anything to your private address.', body: () => <EmailCard /> },
   calendar: { title: 'Calendar feed', desc: 'See your reminders in your calendar app.', body: () => <CalendarCard /> },
@@ -183,7 +183,7 @@ export default function Settings() {
                 )}
                 {device === 'ios' && <Row icon={Zap} title="Siri & Back Tap" hint="“Hey Siri, tell V” and screenshot capture" to="/setup/shortcuts" />}
                 {device === 'android' && <Row icon={Zap} title="Quick capture" hint="Share sheet, Google Assistant and widgets" to="/setup/shortcuts" />}
-                <Row icon={Sparkles} title="V, your companion" hint="Movement and chattiness" onClick={() => setPanel('v')} />
+                <Row icon={Sparkles} title="V, your companion" hint="Personality and voice" onClick={() => setPanel('v')} />
               </Group>
 
               <Group label="Send memories from">

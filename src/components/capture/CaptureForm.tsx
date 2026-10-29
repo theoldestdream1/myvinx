@@ -1,245 +1,111 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Send, Loader2, MessageSquare, Mail, Calendar, FileText, Mic, Image, Globe, BellRing, PenLine, MicOff, Square } from 'lucide-react';
+import { ArrowUp, Loader2, Mic, Square, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from "@/lib/router-compat";
 import { vAgent } from '@/lib/avatar/bus';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
-import { useCaptureMemory, useImageAttachment, type MemorySource } from '@/hooks/useCaptureMemory';
+import { useCaptureMemory, useImageAttachment } from '@/hooks/useCaptureMemory';
 import { ScreenshotButton, ScreenshotPreview } from './ScreenshotAttach';
 
-const sources: { value: MemorySource; label: string; icon: typeof MessageSquare; description: string }[] = [
-  { value: 'manual', label: 'Manual Note', icon: PenLine, description: 'A personal note or thought' },
-  { value: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, description: 'Message from WhatsApp' },
-  { value: 'email', label: 'Email', icon: Mail, description: 'Email content' },
-  { value: 'sms', label: 'SMS', icon: MessageSquare, description: 'Text message' },
-  { value: 'calendar', label: 'Calendar', icon: Calendar, description: 'Calendar event' },
-  { value: 'notes', label: 'Notes App', icon: FileText, description: 'Note from notes app' },
-  { value: 'voice', label: 'Voice Note', icon: Mic, description: 'Transcribed voice note' },
-  { value: 'image', label: 'Image/Screenshot', icon: Image, description: 'Text from image' },
-  { value: 'browser', label: 'Browser', icon: Globe, description: 'Web content' },
-  { value: 'notification', label: 'Notification', icon: BellRing, description: 'App notification' },
-];
-
+/** One calm canvas: speak, type, paste or drop. V works out the who/where/when afterwards. */
 export function CaptureForm() {
   const [content, setContent] = useState('');
-  const [source, setSource] = useState<MemorySource>('manual');
-  const [participants, setParticipants] = useState('');
-  const [location, setLocation] = useState('');
+  const [spoken, setSpoken] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const navigate = useNavigate();
   const image = useImageAttachment();
+  const ta = useRef<HTMLTextAreaElement>(null);
 
-  const { 
-    isRecording, 
-    isProcessing, 
-    duration, 
-    startRecording, 
-    stopRecording, 
-    cancelRecording 
-  } = useVoiceRecording({
+  const rec = useVoiceRecording({
     maxDuration: 60,
     onTranscription: (text) => {
-      setContent((prev) => prev ? `${prev}\n\n${text}` : text);
-      setSource('voice');
-      toast.success('Voice transcribed successfully!');
+      setContent((prev) => (prev ? `${prev}\n\n${text}` : text));
+      setSpoken(true);
       vAgent.emote('happy', 1200);
     },
-    onError: (error) => {
-      toast.error(error);
-      vAgent.idle();
-    },
+    onError: (error) => { toast.error(error); vAgent.idle(); },
   });
 
   const captureMemory = useCaptureMemory(() => navigate('/dashboard'));
+  const busy = captureMemory.isPending;
+  const canSave = (!!content.trim() || !!image.file) && !rec.isRecording && !rec.isProcessing && !busy;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim() && !image.file) {
-      toast.error('Add some text or a screenshot first');
-      return;
-    }
-
-    const metadata: { participants?: string[]; location?: string } = {};
-    if (participants.trim()) {
-      metadata.participants = participants.split(',').map((p) => p.trim()).filter(Boolean);
-    }
-    if (location.trim()) metadata.location = location.trim();
-
-    captureMemory.mutate({ content, source, image: image.file, metadata });
+  const submit = () => {
+    if (!canSave) return;
+    captureMemory.mutate({ content, source: spoken && !image.file ? 'voice' : 'manual', image: image.file });
   };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const isLoading = captureMemory.isPending;
-  const selectedSource = sources.find((s) => s.value === source);
 
   return (
-    <Card className="bg-card/50 border-border/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {selectedSource && <selectedSource.icon className="w-5 h-5 text-primary" />}
-          New Memory
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Source Selection */}
-          <div className="space-y-2">
-            <Label>Source</Label>
-            <Select value={source} onValueChange={(v) => setSource(v as MemorySource)}>
-              <SelectTrigger className="bg-muted/50 border-border/50">
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                {sources.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    <div className="flex items-center gap-2">
-                      <s.icon className="w-4 h-4" />
-                      <span>{s.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedSource && (
-              <p className="text-xs text-muted-foreground">{selectedSource.description}</p>
+    <div className="space-y-5">
+      {/* voice orb */}
+      <div className="flex flex-col items-center gap-3 py-4">
+        <motion.button
+          type="button"
+          aria-label={rec.isRecording ? 'Stop recording' : 'Record a voice note'}
+          onClick={() => { if (rec.isRecording) { rec.stopRecording(); vAgent.idle(); } else { void rec.startRecording(); vAgent.listening(); } }}
+          disabled={rec.isProcessing || busy}
+          whileTap={{ scale: 0.92 }}
+          animate={rec.isRecording ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+          transition={rec.isRecording ? { repeat: Infinity, duration: 1.2 } : { type: 'spring', stiffness: 300, damping: 20 }}
+          className="capture-orb relative flex h-24 w-24 items-center justify-center rounded-full"
+        >
+          {rec.isProcessing ? <Loader2 className="h-8 w-8 animate-spin" /> : rec.isRecording ? <Square className="h-7 w-7" /> : <Mic className="h-8 w-8" />}
+        </motion.button>
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          {rec.isRecording ? `Listening · ${rec.duration}s` : rec.isProcessing ? 'Writing it down…' : 'Tap to talk'}
+        </p>
+        {rec.isRecording && (
+          <button type="button" onClick={() => { rec.cancelRecording(); vAgent.idle(); }} className="text-xs text-muted-foreground underline-offset-4 hover:underline">Discard</button>
+        )}
+      </div>
+
+      {/* text canvas */}
+      <div
+        className={`beam relative rounded-3xl border border-border/60 bg-card/70 p-4 shadow-lg transition-shadow ${dragging ? 'ring-2 ring-primary/60' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f && image.attach(f)) toast.success('Screenshot attached'); }}
+      >
+        <textarea
+          ref={ta}
+          aria-label="What should V remember?"
+          placeholder="…or type it, paste it, drop a screenshot."
+          value={content}
+          onChange={(e) => { setContent(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(e.target.scrollHeight, 420)}px`; }}
+          onPaste={image.onPaste}
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit(); }}
+          disabled={rec.isRecording}
+          rows={4}
+          className="w-full resize-none bg-transparent font-serif text-xl leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+        />
+        <AnimatePresence>
+          {image.previewUrl && (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <ScreenshotPreview url={image.previewUrl} onRemove={image.clear} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <ScreenshotButton onFile={(f) => image.attach(f)} disabled={rec.isProcessing || busy} />
+            {content && (
+              <button type="button" aria-label="Clear" onClick={() => { setContent(''); setSpoken(false); }} className="rounded-full p-2 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
             )}
           </div>
-
-          {/* Content with Voice Recording */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="content">Content</Label>
-              <div className="flex items-center gap-2">
-                {isRecording && (
-                  <span className="text-xs text-destructive font-medium animate-pulse flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-destructive" />
-                    {formatDuration(duration)}
-                  </span>
-                )}
-                {isProcessing && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Transcribing...
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <div className="relative">
-              <Textarea
-                id="content"
-                placeholder={isRecording ? "Recording... speak now" : "Paste a message, a screenshot, or type what you want to remember..."}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                onPaste={image.onPaste}
-                className="min-h-[200px] bg-muted/50 border-border/50 focus:border-primary resize-none pr-24"
-                disabled={isRecording}
-              />
-              
-              {/* Voice Recording Button */}
-              <div className="absolute bottom-3 right-3 flex gap-2">
-                {isRecording ? (
-                  <>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => { cancelRecording(); vAgent.idle(); }}
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    >
-                      <MicOff className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      onClick={() => { stopRecording(); vAgent.idle(); }}
-                      className="h-8 w-8 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                    >
-                      <Square className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                  <ScreenshotButton onFile={(f) => image.attach(f)} disabled={isProcessing || isLoading} />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => { startRecording(); vAgent.listening(); }}
-                    disabled={isProcessing || isLoading}
-                    className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </Button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <ScreenshotPreview url={image.previewUrl} onRemove={image.clear} />
-            
-            <p className="text-xs text-muted-foreground">
-              Type, paste text or a screenshot (Ctrl/Cmd+V), attach an image, or record a voice note (max 60s)
-            </p>
-          </div>
-
-          {/* Optional metadata */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="participants">Participants (optional)</Label>
-              <Input
-                id="participants"
-                placeholder="John, Sarah, Mike..."
-                value={participants}
-                onChange={(e) => setParticipants(e.target.value)}
-                className="bg-muted/50 border-border/50 focus:border-primary"
-              />
-              <p className="text-xs text-muted-foreground">Comma-separated names</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location (optional)</Label>
-              <Input
-                id="location"
-                placeholder="Coffee shop, Office, Home..."
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="bg-muted/50 border-border/50 focus:border-primary"
-              />
-            </div>
-          </div>
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            disabled={isLoading || (!content.trim() && !image.file) || isRecording || isProcessing}
-            className="w-full gradient-primary text-primary-foreground font-semibold"
-            size="lg"
+          <motion.button
+            type="button"
+            onClick={submit}
+            disabled={!canSave}
+            whileTap={{ scale: 0.94 }}
+            className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-md transition-opacity disabled:opacity-40"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Capture & Process with AI
-              </>
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+            Give to V
+          </motion.button>
+        </div>
+      </div>
+      <p className="text-center text-xs text-muted-foreground">No forms. V figures out who, where and when by herself.</p>
+    </div>
   );
 }

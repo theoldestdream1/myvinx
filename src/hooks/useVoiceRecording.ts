@@ -7,10 +7,18 @@ interface UseVoiceRecordingOptions {
   maxDuration?: number; // in seconds
   onTranscription?: (text: string) => void;
   onError?: (error: string) => void;
+  /** 0..1 loudness, ~30 times a second while recording */
+  onLevel?: (level: number) => void;
+  /** stop by itself after this many ms of quiet once the person has spoken */
+  silenceStopMs?: number;
 }
 
 export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
-  const { maxDuration = 60, onTranscription, onError } = options;
+  const { maxDuration = 60, onTranscription, onError, onLevel, silenceStopMs } = options;
+  const levelRef = useRef(onLevel); levelRef.current = onLevel;
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
   
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
@@ -21,6 +29,11 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
   const streamRef = useRef<MediaStream | null>(null);
 
   const cleanup = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+    levelRef.current?.(0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -101,13 +114,43 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
         }
       };
 
+      cancelledRef.current = false;
       mediaRecorder.onstop = async () => {
+        if (cancelledRef.current) { cleanup(); return; }
         const audioBlob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
         await processAudio(audioBlob);
         cleanup();
       };
 
       mediaRecorder.start(1000); // Collect data every second
+
+      // Loudness meter (drives V's listening aura) + optional stop-on-silence
+      try {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = new Ctx();
+        audioCtxRef.current = ctx;
+        const an = ctx.createAnalyser();
+        an.fftSize = 512;
+        ctx.createMediaStreamSource(stream).connect(an);
+        const buf = new Uint8Array(an.fftSize);
+        let heard = false; let quietSince = performance.now();
+        const tick = () => {
+          an.getByteTimeDomainData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+          const level = Math.min(1, Math.sqrt(sum / buf.length) * 4);
+          levelRef.current?.(level);
+          const now = performance.now();
+          if (level > 0.12) { heard = true; quietSince = now; }
+          if (silenceStopMs && heard && now - quietSince > silenceStopMs && mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+            return;
+          }
+          rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      } catch { /* meter is decoration only */ }
       setState('recording');
 
       // Duration timer
@@ -126,7 +169,7 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
       onError?.('Microphone access denied. Please allow microphone access.');
       cleanup();
     }
-  }, [maxDuration, processAudio, cleanup, onError]);
+  }, [maxDuration, processAudio, cleanup, onError, silenceStopMs]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -139,6 +182,7 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
   }, []);
 
   const cancelRecording = useCallback(() => {
+    cancelledRef.current = true;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
