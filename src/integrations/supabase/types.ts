@@ -672,6 +672,10 @@ export type Database = {
           id: string
         }[]
       }
+      invoke_edge_function: {
+        Args: { _body?: Json; _name: string }
+        Returns: number
+      }
       match_memories: {
         Args: {
           _date_from?: string
@@ -719,6 +723,7 @@ export type Database = {
         Returns: undefined
       }
       validate_device_token: { Args: { _token_hash: string }; Returns: string }
+      verify_cron_secret: { Args: { _secret: string }; Returns: boolean }
     }
     Enums: {
       intent_status: "pending" | "reminded" | "resolved" | "expired"
