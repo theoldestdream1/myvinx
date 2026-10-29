@@ -20,7 +20,7 @@ export function TaskCard({ title, chip, meta, status, footer, lit, done, onToggl
         'group p-5 transition-all duration-300',
         lit
           ? 'card-lit'
-          : 'card-ghost hover:border-primary/25 hover:shadow-[0_0_32px_-14px] hover:shadow-primary/25'
+          : 'card-ghost hover:border-silver/25 hover:shadow-[0_0_32px_-14px] hover:shadow-silver/25'
       )}
     >
       <div className="flex items-start gap-4">
@@ -33,7 +33,7 @@ export function TaskCard({ title, chip, meta, status, footer, lit, done, onToggl
               'mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-200',
               done
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-muted-foreground/40 hover:border-primary hover:shadow-[0_0_12px] hover:shadow-primary/40'
+                : 'border-muted-foreground/40 hover:border-primary hover:shadow-[0_0_12px] hover:shadow-silver/40'
             )}
           >
             {done && <Check className="h-3.5 w-3.5" />}

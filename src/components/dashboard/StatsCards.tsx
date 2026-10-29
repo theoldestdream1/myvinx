@@ -10,10 +10,10 @@ interface StatsCardsProps {
 }
 
 const statItems = [
-  { key: 'memories' as const, label: 'Memories', icon: Archive, color: 'text-primary' },
-  { key: 'events' as const, label: 'Events', icon: Calendar, color: 'text-memory-processed' },
-  { key: 'entities' as const, label: 'People & places', icon: Users, color: 'text-entity-person' },
-  { key: 'pendingIntents' as const, label: 'Reminders', icon: Bell, color: 'text-accent' },
+  { key: 'memories' as const, label: 'Memories', icon: Archive, color: 'text-silver' },
+  { key: 'events' as const, label: 'Events', icon: Calendar, color: 'text-silver' },
+  { key: 'entities' as const, label: 'People & places', icon: Users, color: 'text-silver' },
+  { key: 'pendingIntents' as const, label: 'Reminders', icon: Bell, color: 'text-silver' },
 ];
 
 export function StatsCards({ stats }: StatsCardsProps) {
@@ -22,7 +22,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
       {statItems.map((item) => (
         <div
           key={item.key}
-          className="card-ghost p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_32px_-12px] hover:shadow-primary/25"
+          className="card-ghost p-5 transition-all duration-300 lift"
         >
           <div className="flex items-center justify-between mb-4">
             <item.icon className={`w-4.5 h-4.5 ${item.color}`} />
