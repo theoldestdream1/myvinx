@@ -75,16 +75,21 @@ export function DailyBrief() {
   const nothingToDo = brief.due.length === 0;
 
   return (
-    <Card className="bg-gradient-to-br from-primary/10 via-card/60 to-card/40 border-primary/20">
-      <CardContent className="p-5 space-y-4">
+    <Card className="card-lit overflow-hidden">
+      <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/15">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-primary/15 border border-primary/20">
               <Sun className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">{greeting(data.display_name)}</h2>
-              <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
+              <h2 className="font-display text-3xl tracking-tight text-foreground">
+                {greeting().split(',')[0]}
+                {data.display_name && (
+                  <>, <span className="serif-accent">{data.display_name.split(' ')[0]}</span></>
+                )}
+              </h2>
+              <p className="eyebrow mt-1">{format(new Date(), 'EEEE, MMMM d')}</p>
             </div>
           </div>
           <Button asChild variant="ghost" size="sm">

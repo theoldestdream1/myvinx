@@ -62,12 +62,12 @@ export function QuickCapture() {
   const isLoading = captureMemory.isPending;
 
   return (
-    <Card className="bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 border-primary/20">
-      <CardContent className="p-4">
+    <Card className="card-lit">
+      <CardContent className="p-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <PenLine className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">Quick Capture</span>
+            <span className="font-display text-xl tracking-tight text-foreground">Quick capture</span>
             <div className="ml-auto flex items-center gap-2 text-xs">
               {isRecording && (
                 <span className="text-destructive font-medium animate-pulse flex items-center gap-1">
