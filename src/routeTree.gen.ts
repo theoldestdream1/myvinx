@@ -10,33 +10,180 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CaptureRouteImport } from './routes/capture'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as GraphRouteImport } from './routes/graph'
+import { Route as IntentsRouteImport } from './routes/intents'
+import { Route as QueryRouteImport } from './routes/query'
+import { Route as QuickRouteImport } from './routes/quick'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ShareRouteImport } from './routes/share'
+import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as SetupShortcutsRouteImport } from './routes/setup.shortcuts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaptureRoute = CaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GraphRoute = GraphRouteImport.update({
+  id: '/graph',
+  path: '/graph',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntentsRoute = IntentsRouteImport.update({
+  id: '/intents',
+  path: '/intents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QueryRoute = QueryRouteImport.update({
+  id: '/query',
+  path: '/query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuickRoute = QuickRouteImport.update({
+  id: '/quick',
+  path: '/quick',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupShortcutsRoute = SetupShortcutsRouteImport.update({
+  id: '/setup/shortcuts',
+  path: '/setup/shortcuts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/capture': typeof CaptureRoute
+  '/dashboard': typeof DashboardRoute
+  '/graph': typeof GraphRoute
+  '/intents': typeof IntentsRoute
+  '/query': typeof QueryRoute
+  '/quick': typeof QuickRoute
+  '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/timeline': typeof TimelineRoute
+  '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/capture': typeof CaptureRoute
+  '/dashboard': typeof DashboardRoute
+  '/graph': typeof GraphRoute
+  '/intents': typeof IntentsRoute
+  '/query': typeof QueryRoute
+  '/quick': typeof QuickRoute
+  '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/timeline': typeof TimelineRoute
+  '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/capture': typeof CaptureRoute
+  '/dashboard': typeof DashboardRoute
+  '/graph': typeof GraphRoute
+  '/intents': typeof IntentsRoute
+  '/query': typeof QueryRoute
+  '/quick': typeof QuickRoute
+  '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/timeline': typeof TimelineRoute
+  '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/capture'
+    | '/dashboard'
+    | '/graph'
+    | '/intents'
+    | '/query'
+    | '/quick'
+    | '/settings'
+    | '/share'
+    | '/timeline'
+    | '/setup/shortcuts'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/capture'
+    | '/dashboard'
+    | '/graph'
+    | '/intents'
+    | '/query'
+    | '/quick'
+    | '/settings'
+    | '/share'
+    | '/timeline'
+    | '/setup/shortcuts'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/capture'
+    | '/dashboard'
+    | '/graph'
+    | '/intents'
+    | '/query'
+    | '/quick'
+    | '/settings'
+    | '/share'
+    | '/timeline'
+    | '/setup/shortcuts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  CaptureRoute: typeof CaptureRoute
+  DashboardRoute: typeof DashboardRoute
+  GraphRoute: typeof GraphRoute
+  IntentsRoute: typeof IntentsRoute
+  QueryRoute: typeof QueryRoute
+  QuickRoute: typeof QuickRoute
+  SettingsRoute: typeof SettingsRoute
+  ShareRoute: typeof ShareRoute
+  TimelineRoute: typeof TimelineRoute
+  SetupShortcutsRoute: typeof SetupShortcutsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +195,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/capture': {
+      id: '/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof CaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/graph': {
+      id: '/graph'
+      path: '/graph'
+      fullPath: '/graph'
+      preLoaderRoute: typeof GraphRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intents': {
+      id: '/intents'
+      path: '/intents'
+      fullPath: '/intents'
+      preLoaderRoute: typeof IntentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/query': {
+      id: '/query'
+      path: '/query'
+      fullPath: '/query'
+      preLoaderRoute: typeof QueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quick': {
+      id: '/quick'
+      path: '/quick'
+      fullPath: '/quick'
+      preLoaderRoute: typeof QuickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup/shortcuts': {
+      id: '/setup/shortcuts'
+      path: '/setup/shortcuts'
+      fullPath: '/setup/shortcuts'
+      preLoaderRoute: typeof SetupShortcutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  CaptureRoute: CaptureRoute,
+  DashboardRoute: DashboardRoute,
+  GraphRoute: GraphRoute,
+  IntentsRoute: IntentsRoute,
+  QueryRoute: QueryRoute,
+  QuickRoute: QuickRoute,
+  SettingsRoute: SettingsRoute,
+  ShareRoute: ShareRoute,
+  TimelineRoute: TimelineRoute,
+  SetupShortcutsRoute: SetupShortcutsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -9,4 +9,7 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- The original Vinx codebase (Vite + React Router + Supabase edge functions) lives untouched in `vinx/` as reference source; it is excluded from the app build until migrated into `src/`.
+- The original Vinx upload is kept read-only in `vinx/` for reference; it is excluded from the build. Live code is in `src/` and `supabase/`.
+- App screens live in `src/screens/` and are mounted by thin route files in `src/routes/` (all `ssr: false`, since they rely on browser APIs and the localStorage session).
+- Screens keep react-router-style navigation through `src/lib/router-compat.tsx`, an adapter over TanStack Router; never install react-router-dom.
+- Backend logic stays in the existing Supabase edge functions under `supabase/functions/` (17 functions with their own auth); scheduled jobs authenticate with a vault-held secret checked by `verify_cron_secret`.
