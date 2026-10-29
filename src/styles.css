@@ -307,7 +307,7 @@
 @keyframes v-glint { 0%,70% { background-position: 150% 0; } 100% { background-position: -60% 0; } }
 .v-ground { position: absolute; left: 20%; right: 20%; bottom: -6px; height: 8px; border-radius: 9999px;
   background: radial-gradient(closest-side, oklch(0.9 0.01 250 / .35), transparent); filter: blur(1px); }
-.v-ring { position: absolute; inset: 8% -8%; border-radius: 9999px; pointer-events: none;
+.v-ring { position: absolute; left: 50%; top: 45%; width: 150%; aspect-ratio: 1; translate: -50% -50%; border-radius: 9999px; pointer-events: none;
   border: 1.5px solid oklch(0.92 0.01 250 / .7); box-shadow: 0 0 24px oklch(0.92 0.01 250 / .35), inset 0 0 18px oklch(0.75 0.12 240 / .25); }
 .v-ring-2 { border-color: oklch(0.75 0.12 240 / .45); }
 @media (prefers-reduced-motion: reduce) { .v-life-on, .v-life-on > img, .v-talk, .v-glint { animation: none; } }

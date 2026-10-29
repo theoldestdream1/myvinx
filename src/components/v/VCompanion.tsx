@@ -217,7 +217,7 @@ export function VCompanion() {
   const go = (to: string) => { setPhase("rest"); navigate(to); };
   const toggleVoice = () => { const p = { ...loadPrefs(), voice: !voiceOn }; savePrefs(p); if (!p.voice) vHush(); };
 
-  const status = phase === "prompting" ? "V is talking" : phase === "listening" ? "Listening… tap V when you're done" : phase === "transcribing" ? "Catching every word…" : phase === "saving" ? "Saving…" : "";
+  const status = phase === "prompting" ? "V is talking" : phase === "listening" ? "Listening · tap V to finish" : phase === "transcribing" ? "Catching every word…" : phase === "saving" ? "Saving…" : "";
   const bubbleAlign = focus ? "center" : side;
 
   return (
