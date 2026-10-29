@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 import { StatsCards } from './StatsCards';
 import { RecentMemories } from './RecentMemories';
 import { UpcomingIntents } from './UpcomingIntents';
@@ -28,28 +29,42 @@ export function DashboardContent() {
   });
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Your personal memory command center</p>
-      </div>
+    <div className="relative min-h-full">
+      <div className="pointer-events-none absolute inset-0 aurora opacity-60" />
+      <div className="relative p-6 lg:p-10 space-y-10 max-w-6xl">
+        {/* Header */}
+        <div>
+          <p className="eyebrow mb-2">Overview — {format(new Date(), 'EEEE, MMMM d')}</p>
+          <h1 className="font-display text-4xl tracking-tight sm:text-5xl">
+            Your memory, <span className="serif-accent">at a glance.</span>
+          </h1>
+        </div>
 
-      <IosInstallGuide />
+        <IosInstallGuide />
 
-      {/* Today */}
-      <DailyBrief />
+        {/* Today */}
+        <section>
+          <p className="eyebrow mb-3">Today</p>
+          <DailyBrief />
+        </section>
 
-      {/* Stats */}
-      <StatsCards stats={stats} />
+        {/* Stats */}
+        <section>
+          <p className="eyebrow mb-3">The numbers</p>
+          <StatsCards stats={stats} />
+        </section>
 
-      {/* Quick Capture */}
-      <QuickCapture />
+        {/* Quick Capture */}
+        <section>
+          <p className="eyebrow mb-3">Capture</p>
+          <QuickCapture />
+        </section>
 
-      {/* Two column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentMemories />
-        <UpcomingIntents />
+        {/* Two column layout */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentMemories />
+          <UpcomingIntents />
+        </section>
       </div>
     </div>
   );
