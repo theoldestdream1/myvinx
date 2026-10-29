@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from "@/lib/router-compat";
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Mic, Square, Undo2, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';

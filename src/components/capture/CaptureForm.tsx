@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Send, Loader2, MessageSquare, Mail, Calendar, FileText, Mic, Image, Globe, BellRing, PenLine, MicOff, Square } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { vAgent } from '@/lib/avatar/bus';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useCaptureMemory, useImageAttachment, type MemorySource } from '@/hooks/useCaptureMemory';

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
 import { loadPrefs, subscribePrefs } from '@/lib/avatar/prefs';
 

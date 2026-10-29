@@ -4,7 +4,6 @@
  */
 import {
   Link as TsLink,
-  useNavigate as useTsNavigate,
   useLocation as useTsLocation,
   useRouter,
 } from "@tanstack/react-router";
@@ -107,8 +106,7 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(({ to, classN
 });
 NavLink.displayName = "NavLink";
 
-export type NavLinkProps_ = NavLinkProps;
-export type { NavLinkProps as NavLinkPropsType };
+export type { NavLinkProps };
 
 export function Navigate({ to, replace }: { to: To; replace?: boolean }) {
   const navigate = useNavigate();
@@ -118,4 +116,3 @@ export function Navigate({ to, replace }: { to: To; replace?: boolean }) {
   return null;
 }
 
-export const useTsNavigateRaw = useTsNavigate;

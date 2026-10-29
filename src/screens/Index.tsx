@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { FinancialHero } from '@/components/ui/hero-section';
