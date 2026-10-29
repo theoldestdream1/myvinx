@@ -45,3 +45,15 @@ export function hasWorkerSecret(req: Request): boolean {
   const got = req.headers.get("x-worker-secret") || "";
   return !!expected && safeEqual(got, expected);
 }
+
+/**
+ * Cron jobs send a secret that lives only in the database vault, so it never has
+ * to be copied between systems. Accept either the env secret or that vault secret.
+ */
+export async function isWorker(req: Request): Promise<boolean> {
+  if (hasWorkerSecret(req)) return true;
+  const got = req.headers.get("x-worker-secret") || "";
+  if (got.length < 32) return false;
+  const { data, error } = await adminClient().rpc("verify_cron_secret", { _secret: got });
+  return !error && data === true;
+}
