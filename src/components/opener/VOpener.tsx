@@ -247,6 +247,7 @@ export function VOpener({ onDone }: { onDone: () => void }) {
       const t = setTimeout(() => { setPhase("gone"); onDone(); }, 1100);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [phase, onDone]);
 
   const caption = [...captions].reverse().find((c) => p >= c.at)!;
