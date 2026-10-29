@@ -20,7 +20,6 @@ import { Route as QuickRouteImport } from './routes/quick'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as TimelineRouteImport } from './routes/timeline'
-import { Route as VLabRouteImport } from './routes/v-lab'
 import { Route as SetupShortcutsRouteImport } from './routes/setup.shortcuts'
 
 const IndexRoute = IndexRouteImport.update({
@@ -78,11 +77,6 @@ const TimelineRoute = TimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VLabRoute = VLabRouteImport.update({
-  id: '/v-lab',
-  path: '/v-lab',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SetupShortcutsRoute = SetupShortcutsRouteImport.update({
   id: '/setup/shortcuts',
   path: '/setup/shortcuts',
@@ -101,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/timeline': typeof TimelineRoute
-  '/v-lab': typeof VLabRoute
   '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRoutesByTo {
@@ -116,7 +109,6 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/timeline': typeof TimelineRoute
-  '/v-lab': typeof VLabRoute
   '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRoutesById {
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/timeline': typeof TimelineRoute
-  '/v-lab': typeof VLabRoute
   '/setup/shortcuts': typeof SetupShortcutsRoute
 }
 export interface FileRouteTypes {
@@ -149,7 +140,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/share'
     | '/timeline'
-    | '/v-lab'
     | '/setup/shortcuts'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -164,7 +154,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/share'
     | '/timeline'
-    | '/v-lab'
     | '/setup/shortcuts'
   id:
     | '__root__'
@@ -179,7 +168,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/share'
     | '/timeline'
-    | '/v-lab'
     | '/setup/shortcuts'
   fileRoutesById: FileRoutesById
 }
@@ -195,7 +183,6 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ShareRoute: typeof ShareRoute
   TimelineRoute: typeof TimelineRoute
-  VLabRoute: typeof VLabRoute
   SetupShortcutsRoute: typeof SetupShortcutsRoute
 }
 
@@ -278,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/v-lab': {
-      id: '/v-lab'
-      path: '/v-lab'
-      fullPath: '/v-lab'
-      preLoaderRoute: typeof VLabRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/setup/shortcuts': {
       id: '/setup/shortcuts'
       path: '/setup/shortcuts'
@@ -307,7 +287,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ShareRoute: ShareRoute,
   TimelineRoute: TimelineRoute,
-  VLabRoute: VLabRoute,
   SetupShortcutsRoute: SetupShortcutsRoute,
 }
 export const routeTree = rootRouteImport
