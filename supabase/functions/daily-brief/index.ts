@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, json } from "../_shared/cors.ts";
-import { adminClient, authenticate, hasWorkerSecret } from "../_shared/auth.ts";
+import { adminClient, authenticate, isWorker } from "../_shared/auth.ts";
 import { pushConfigured, sendToAll, type PushSub } from "../_shared/push.ts";
 import { composeBrief, localDate, type Brief } from "../_shared/brief.ts";
 import { isGone, sendMessage, telegramConfigured } from "../_shared/telegram.ts";
@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     // ---- Cron mode: push each user's brief when their morning arrives --------
-    if (hasWorkerSecret(req)) {
+    if (await isWorker(req)) {
       const tgOn = telegramConfigured();
       if (!pushConfigured() && !tgOn) return json({ error: "Neither VAPID keys nor a Telegram bot are configured" }, 503);
 

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, json } from "../_shared/cors.ts";
-import { adminClient, authenticate, hasWorkerSecret } from "../_shared/auth.ts";
+import { adminClient, authenticate, isWorker } from "../_shared/auth.ts";
 import { pushConfigured, sendToAll, type PushSub } from "../_shared/push.ts";
 import { signActionToken } from "../_shared/actionToken.ts";
 import { formatTime } from "../_shared/brief.ts";
@@ -20,7 +20,7 @@ serve(async (req) => {
 
   try {
     // ---- Test mode: a signed-in user pings their own devices ------------------
-    if (!hasWorkerSecret(req)) {
+    if (!(await isWorker(req))) {
       const caller = await authenticate(req);
       if (!caller || caller.kind !== "user") return json({ error: "Unauthorized" }, 401);
       if (!pushConfigured()) return json({ error: "Push is not configured on the server (VAPID keys missing)" }, 503);

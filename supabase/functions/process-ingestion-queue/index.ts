@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, json } from "../_shared/cors.ts";
-import { adminClient, hasWorkerSecret } from "../_shared/auth.ts";
+import { adminClient, isWorker } from "../_shared/auth.ts";
 
 // Edge functions time out around 150s and each memory costs a few seconds of AI,
 // so keep batches small and run a few in parallel. Cron runs this every minute.
@@ -34,7 +34,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   // Only the cron job (which knows WORKER_SECRET) may trigger this
-  if (!hasWorkerSecret(req)) return json({ error: "Unauthorized" }, 401);
+  if (!(await isWorker(req))) return json({ error: "Unauthorized" }, 401);
 
   const supabase = adminClient();
 
