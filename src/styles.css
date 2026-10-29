@@ -258,6 +258,17 @@
 .v-rest-bob { animation: v-float-sm 3.6s ease-in-out infinite; }
 @keyframes v-float-sm { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
+/* V companion */
+.v-bubble { animation: v-bubble-in .35s cubic-bezier(.34,1.56,.64,1) both; transform-origin: bottom right; }
+@keyframes v-bubble-in { from { opacity: 0; transform: scale(.85) translateY(6px); } to { opacity: 1; transform: none; } }
+.v-aura { position: absolute; inset: 10% 5%; border-radius: 9999px; pointer-events: none;
+  background: radial-gradient(circle, oklch(0.92 0.01 250 / .45), transparent 70%); }
+.v-aura-thinking { animation: v-aura-pulse 1.4s ease-in-out infinite; }
+.v-aura-listening { animation: v-aura-pulse .8s ease-in-out infinite; background: radial-gradient(circle, oklch(0.75 0.12 240 / .4), transparent 70%); }
+@keyframes v-aura-pulse { 0%,100% { opacity: .4; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.1); } }
+.v-mood-tilt { rotate: -6deg; }
+@media (prefers-reduced-motion: reduce) { .v-bubble, .v-aura { animation: none; } }
+
 /* page entrance: staggered rise */
 .rise > * { animation: rise .7s var(--ease-out-expo) both; }
 .rise > *:nth-child(2) { animation-delay: .05s; } .rise > *:nth-child(3) { animation-delay: .1s; }
