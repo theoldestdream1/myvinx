@@ -117,7 +117,7 @@ export function VCompanion() {
     const l = line("listen", getPersonality());
     say(l.text, "listening", { hold: 0 });
     await vSpeak(l.text);
-    if (phaseRef.current !== "prompting") return; // cancelled while she spoke
+    if ((phaseRef.current as Phase) !== "prompting") return; // cancelled while she spoke
     await rec.startRecording();
   }, [rec, say]);
 

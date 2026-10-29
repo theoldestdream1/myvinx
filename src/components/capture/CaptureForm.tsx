@@ -62,7 +62,7 @@ export function CaptureForm() {
 
       {/* text canvas */}
       <div
-        className={`beam surface relative rounded-3xl p-4 transition-shadow ${dragging ? 'ring-2 ring-primary/60' : ''}`}
+        className={`beam relative rounded-3xl border border-border/60 bg-card/70 p-4 shadow-lg transition-shadow ${dragging ? 'ring-2 ring-primary/60' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f && image.attach(f)) toast.success('Screenshot attached'); }}
