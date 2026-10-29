@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useEffect } from 'react';
 import { useNavigate } from "@/lib/router-compat";
 import { useQuery } from '@tanstack/react-query';
@@ -46,11 +47,8 @@ export default function Timeline() {
     <AppLayout>
       <div className="p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Memory Timeline</h1>
-            <p className="text-muted-foreground mt-1">
-              Your structured memories, organized chronologically
-            </p>
+          <div>
+            <PageHeader eyebrow="Timeline" title={<>Your memories, <span className="serif-accent">in order</span></>} sub="Everything you saved, organised by day." />
           </div>
 
           {isLoading ? (

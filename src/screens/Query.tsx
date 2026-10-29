@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
@@ -193,11 +194,8 @@ export default function Query() {
     <AppLayout>
       <div className="flex-1 flex flex-col h-full">
         {/* Header */}
-        <div className="p-6 border-b border-border">
-          <h1 className="text-3xl font-bold text-foreground">Query Memories</h1>
-          <p className="text-muted-foreground mt-1">
-            Ask questions about your memories in natural language
-          </p>
+        <div className="px-6 pt-6 pb-4 border-b border-border/40">
+          <PageHeader eyebrow="Ask" title={<>Ask V <span className="serif-accent">anything</span></>} sub="Questions in plain words, answered from your memories." />
         </div>
 
         {/* Messages */}

@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useEffect } from 'react';
 import { useNavigate } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
@@ -26,11 +27,8 @@ export default function Capture() {
     <AppLayout>
       <div className="p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Capture Memory</h1>
-            <p className="text-muted-foreground mt-1">
-              Add a new memory to be processed by the AI agents
-            </p>
+          <div>
+            <PageHeader eyebrow="Capture" title={<>Tell V <span className="serif-accent">anything</span></>} sub="Type, speak or drop a screenshot. V sorts it after it’s saved." />
           </div>
           <CaptureForm />
         </div>
