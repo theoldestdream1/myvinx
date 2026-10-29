@@ -80,23 +80,29 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 gradient-neural relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0 gradient-glow opacity-50" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
+      <div className="pointer-events-none absolute inset-0 aurora" />
+      <div className="pointer-events-none absolute inset-0 v-grain" />
 
-      <Card className="w-full max-w-md bg-card/80 glass border-border/50 shadow-card relative z-10">
+      <Card className="w-full max-w-md card-lit glass relative z-10">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">V</span>
+          <div className="mx-auto relative w-16 h-16 flex items-center justify-center">
+            <div className="absolute inset-0 rotate-45 rounded-[28%] bg-gradient-to-br from-primary via-primary/40 to-transparent" />
+            <div className="absolute inset-[3px] rotate-45 rounded-[26%] bg-card" />
+            <span className="relative font-display italic text-3xl text-primary leading-none translate-y-0.5">V</span>
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">
-              <span className="text-gradient">Vinx</span>
+            <p className="eyebrow mb-2">{isSignUp ? 'New here' : 'Welcome back'}</p>
+            <CardTitle className="font-display text-4xl tracking-tight">
+              {isSignUp ? (
+                <>Meet your <span className="serif-accent">second brain.</span></>
+              ) : (
+                <>Your memories <span className="serif-accent">missed you.</span></>
+              )}
             </CardTitle>
-            <CardDescription className="text-muted-foreground mt-2">
-              {isSignUp ? 'Create your personal memory OS' : 'Welcome back to your second brain'}
+            <CardDescription className="text-muted-foreground mt-3">
+              {isSignUp ? 'Create your personal memory OS' : 'Sign in to pick up where you left off'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -155,7 +161,7 @@ export default function Auth() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full gradient-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+              className="w-full rounded-full bg-primary text-primary-foreground font-semibold shadow-[0_0_28px_-8px] shadow-primary/50 hover:bg-primary/90 transition-all"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
