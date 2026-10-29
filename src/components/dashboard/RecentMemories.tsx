@@ -1,12 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { RefreshCw, MessageSquare, Mail, Calendar, FileText, Mic, Image, Globe, BellRing, PenLine } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MessageSquare, Mail, Calendar, FileText, Mic, Image, Globe, BellRing, PenLine } from 'lucide-react';
+import { TaskCard } from './TaskCard';
 
 const sourceIcons: Record<string, typeof MessageSquare> = {
   whatsapp: MessageSquare,
@@ -21,11 +18,11 @@ const sourceIcons: Record<string, typeof MessageSquare> = {
   manual: PenLine,
 };
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-memory-pending/20 text-memory-pending',
-  processing: 'bg-memory-processing/20 text-memory-processing',
-  processed: 'bg-memory-processed/20 text-memory-processed',
-  failed: 'bg-memory-failed/20 text-memory-failed',
+const chipTone: Record<string, 'primary' | 'destructive' | 'muted'> = {
+  pending: 'muted',
+  processing: 'primary',
+  processed: 'muted',
+  failed: 'destructive',
 };
 
 export function RecentMemories() {
@@ -53,58 +50,69 @@ export function RecentMemories() {
     },
   });
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-28 card-ghost animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!memories?.length) {
+    return (
+      <p className="font-display italic text-xl text-muted-foreground">
+        Nothing saved yet — your first memory is one tap away.
+      </p>
+    );
+  }
+
   return (
-    <Card className="card-ghost">
-      <CardHeader>
-        <p className="eyebrow mb-1">Latest saves</p>
-        <CardTitle className="font-display text-2xl tracking-tight">Recent memories</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : memories?.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-8">
-            No memories yet. Start capturing!
-          </p>
-        ) : (
-          memories?.map((memory) => {
-            const Icon = sourceIcons[memory.source] || PenLine;
-            return (
-              <div
-                key={memory.id}
-                className="p-3.5 rounded-xl bg-muted/20 border border-border/40 hover:border-primary/30 hover:shadow-[0_0_24px_-12px] hover:shadow-primary/25 transition-all duration-300"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground line-clamp-2">{memory.raw_content}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className={cn('text-xs', statusColors[memory.status])}>
-                        {memory.status}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(memory.created_at), { addSuffix: true })}
-                      </span>
-                      {memory.status === 'failed' && (
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => retry(memory.id)}>
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          Retry
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {memories.map((memory) => {
+        const Icon = sourceIcons[memory.source] || PenLine;
+        return (
+          <TaskCard
+            key={memory.id}
+            title={memory.raw_content}
+            chip={{ label: memory.status, tone: chipTone[memory.status] ?? 'muted' }}
+            meta={
+              <>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+                  <Icon className="h-3 w-3 text-muted-foreground" />
+                </span>
+                <span className="text-sm text-muted-foreground capitalize">{memory.source}</span>
+                <span className="text-sm text-muted-foreground/60">
+                  · {formatDistanceToNow(new Date(memory.created_at), { addSuffix: true })}
+                </span>
+              </>
+            }
+            status={
+              memory.status === 'failed' ? (
+                <>
+                  V couldn't read this —{' '}
+                  <button
+                    type="button"
+                    onClick={() => retry(memory.id)}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    try again
+                  </button>
+                </>
+              ) : memory.status === 'processed' ? (
+                <>
+                  V understood this — <strong className="text-foreground">people, places and dates</strong> pulled out
+                </>
+              ) : (
+                <>
+                  V is <strong className="text-foreground">reading this</strong> right now…
+                </>
+              )
+            }
+          />
+        );
+      })}
+    </div>
   );
 }

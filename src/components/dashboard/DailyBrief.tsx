@@ -1,29 +1,19 @@
-import { Link } from "@/lib/router-compat";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Sun, Sparkles, ArrowRight } from 'lucide-react';
 import { format, formatDistanceToNowStrict, isToday } from 'date-fns';
-import { useEffect } from 'react';
+import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { vAgent } from '@/lib/avatar/bus';
-import { greeting as memoGreeting, lines } from '@/lib/avatar/scripts';
+import { lines } from '@/lib/avatar/scripts';
+import { TaskCard } from './TaskCard';
 
-interface Brief {
+export interface Brief {
   due: { id: string; intent_text: string; trigger_date: string; status: string }[];
   upcoming_count: number;
   waiting_count: number;
   captured_7d: number;
   resurfaced: { event_id: string; title: string; summary: string | null; saved_at: string } | null;
-}
-
-function greeting(name?: string | null) {
-  const h = new Date().getHours();
-  const part = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-  return name ? `${part}, ${name.split(' ')[0]}` : part;
 }
 
 export function DailyBrief() {
@@ -58,105 +48,57 @@ export function DailyBrief() {
     onError: () => toast.error('Could not update that reminder'),
   });
 
-  // V says hello once a day, and mentions what actually needs attention
-  const brief0 = data?.brief;
-  const nameForMemo = data?.display_name;
-  useEffect(() => {
-    if (!brief0) return;
-    const now = new Date();
-    const overdue = brief0.due.filter((d) => !isToday(new Date(d.trigger_date)) && new Date(d.trigger_date) < now).length;
-    const g = memoGreeting({ name: nameForMemo, hour: now.getHours(), dueToday: brief0.due.length - overdue, overdue });
-    vAgent.say(g.text, g.mood, 'low', 'greeting');
-  }, [brief0, nameForMemo]);
-
-  // The brief is a bonus: if it fails to load, the dashboard simply doesn't show it
   if (!data?.brief) return null;
   const { brief } = data;
-  const nothingToDo = brief.due.length === 0;
 
   return (
-    <Card className="card-lit overflow-hidden">
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 rounded-xl bg-primary/15 border border-primary/20">
-              <Sun className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-display text-3xl tracking-tight text-foreground">
-                {greeting().split(',')[0]}
-                {data.display_name && (
-                  <>, <span className="serif-accent">{data.display_name.split(' ')[0]}</span></>
-                )}
-              </h2>
-              <p className="eyebrow mt-1">{format(new Date(), 'EEEE, MMMM d')}</p>
-            </div>
-          </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/intents">
-              All reminders <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {brief.due.length === 0 ? (
+        <p className="font-display italic text-xl text-muted-foreground">
+          Nothing due today — V is keeping watch.
+          {brief.upcoming_count > 0 && (
+            <span className="not-italic font-sans text-sm">
+              {' '}{brief.upcoming_count} coming up in the next 3 days.
+            </span>
+          )}
+        </p>
+      ) : (
+        brief.due.map((d) => {
+          const when = new Date(d.trigger_date);
+          const overdue = !isToday(when) && when < new Date();
+          return (
+            <TaskCard
+              key={d.id}
+              lit
+              title={d.intent_text}
+              chip={{ label: overdue ? 'Overdue' : 'Due today', tone: overdue ? 'destructive' : 'primary' }}
+              status={
+                <>
+                  Reminder {overdue ? 'was due' : 'lands'}{' '}
+                  <strong className="text-foreground">
+                    {overdue ? format(when, 'MMM d') : `today at ${format(when, 'h:mm a')}`}
+                  </strong>
+                </>
+              }
+              footer={overdue ? 'V is still holding this for you' : 'waiting on you'}
+              onToggle={() => markDone.mutate(d.id)}
+            />
+          );
+        })
+      )}
 
-        {nothingToDo ? (
-          <p className="text-sm text-muted-foreground">
-            Nothing due today.
-            {brief.upcoming_count > 0 && ` ${brief.upcoming_count} coming up in the next 3 days.`}
-            {brief.captured_7d > 0 && ` You've saved ${brief.captured_7d} ${brief.captured_7d === 1 ? 'memory' : 'memories'} this week.`}
+      {brief.resurfaced && (
+        <div className="card-ghost p-5">
+          <p className="eyebrow mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            From {formatDistanceToNowStrict(new Date(brief.resurfaced.saved_at))} ago
           </p>
-        ) : (
-          <ul className="space-y-2">
-            {brief.due.map((d) => {
-              const when = new Date(d.trigger_date);
-              const overdue = !isToday(when) && when < new Date();
-              return (
-                <li key={d.id} className="flex items-center gap-3 rounded-lg bg-background/40 px-3 py-2">
-                  <button
-                    type="button"
-                    aria-label="Mark done"
-                    onClick={() => markDone.mutate(d.id)}
-                    className="text-muted-foreground hover:text-memory-processed transition-colors"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                  </button>
-                  <span className="flex-1 min-w-0 truncate text-sm text-foreground">{d.intent_text}</span>
-                  {overdue ? (
-                    <Badge variant="outline" className="text-[10px] border-destructive/40 text-destructive">
-                      overdue
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{format(when, 'h:mm a')}</span>
-                  )}
-                </li>
-              );
-            })}
-            {(brief.upcoming_count > 0 || brief.waiting_count > 0) && (
-              <p className="text-xs text-muted-foreground pt-1">
-                {[
-                  brief.upcoming_count > 0 && `${brief.upcoming_count} coming up soon`,
-                  brief.waiting_count > 0 && `${brief.waiting_count} waiting on a person, place or moment`,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            )}
-          </ul>
-        )}
-
-        {brief.resurfaced && (
-          <div className="rounded-lg border border-border/50 bg-background/30 p-3">
-            <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              From {formatDistanceToNowStrict(new Date(brief.resurfaced.saved_at))} ago
-            </p>
-            <p className="text-sm font-medium text-foreground">{brief.resurfaced.title}</p>
-            {brief.resurfaced.summary && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{brief.resurfaced.summary}</p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          <p className="font-display text-xl tracking-tight text-foreground">{brief.resurfaced.title}</p>
+          {brief.resurfaced.summary && (
+            <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{brief.resurfaced.summary}</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
