@@ -1,0 +1,12 @@
+[
+ {"capability":"frontend screens","source":"Vite+React Router","outcome":"ported to TanStack routes via router-compat","status":"done","next_action":"verify signed-in flows"},
+ {"capability":"schema","source":"9 migrations","outcome":"consolidated into Supabase project","status":"done","next_action":null},
+ {"capability":"records","source":"old Supabase gmaoiojwbqdtbmvbtmnm","outcome":"migrate","status":"pending","next_action":"user exports tables as CSV"},
+ {"capability":"auth users","source":"old Supabase auth","outcome":"migrate","status":"pending","next_action":"user export; first-login reset"},
+ {"capability":"storage bucket memory-media","source":"old project","outcome":"bucket+policies created","status":"done","next_action":"copy file bytes if any"},
+ {"capability":"edge functions (17)","source":"supabase/functions","outcome":"deployed unchanged except cron auth","status":"deployed","next_action":"live test with secrets"},
+ {"capability":"cron","source":"pg_cron","outcome":"reminders 1m, rescue 5m, brief hourly","status":"done","next_action":null},
+ {"capability":"secrets","source":"env","outcome":"WORKER_SECRET, ACTION_SECRET generated; LOVABLE_API_KEY present","status":"partial","next_action":"VAPID_*, TELEGRAM_*, INBOUND_EMAIL_DOMAIN, EMAIL_WEBHOOK_SECRET, RESEND_API_KEY, EMAIL_FROM"},
+ {"capability":"telegram webhook","source":"scripts/telegram-setup.sh","outcome":"needs re-registration to new URL","status":"pending","next_action":"after bot token set"},
+ {"capability":"tests","source":"tests/web, tests/edge","outcome":"not yet ported","status":"pending","next_action":"port to vitest setup"}
+]
