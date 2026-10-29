@@ -17,7 +17,7 @@ export function TaskCard({ title, chip, meta, status, footer, lit, done, onToggl
   return (
     <div
       className={cn(
-        'group p-5 transition-all duration-300',
+        'beam group p-5 transition-all duration-300',
         lit
           ? 'card-lit'
           : 'card-ghost hover:border-silver/25 hover:shadow-[0_0_32px_-14px] hover:shadow-silver/25'

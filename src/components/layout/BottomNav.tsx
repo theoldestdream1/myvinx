@@ -20,7 +20,7 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/70 backdrop-blur-2xl shadow-[inset_0_1px_0_var(--rim),0_-12px_40px_-12px_oklch(0_0_0/0.8)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/92 backdrop-blur-md shadow-[inset_0_1px_0_var(--rim),0_-12px_40px_-12px_oklch(0_0_0/0.8)]">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -39,11 +39,11 @@ export function BottomNav() {
               )}
             >
               {isCapture ? (
-                <div className="w-14 h-14 press rounded-full bg-gradient-to-b from-primary to-primary/70 flex items-center justify-center shadow-[inset_0_1px_0_oklch(1_0_0/0.5),0_0_36px_-4px_var(--primary)] ring-4 ring-background">
+                <div className="w-14 h-14 press rounded-full bg-gradient-to-b from-primary to-primary/70 flex items-center justify-center shadow-[inset_0_1px_0_oklch(1_0_0/0.5),0_0_0_1px_var(--silver),0_0_28px_-6px_var(--silver)] ring-4 ring-background">
                   <item.icon className="w-6 h-6 text-primary-foreground" />
                 </div>
               ) : (
-                <item.icon className={cn('w-5 h-5', isActive && 'text-primary drop-shadow-[0_0_8px_oklch(0.78_0.115_240/0.6)]')} />
+                <item.icon className={cn('w-5 h-5', isActive && 'text-primary drop-shadow-[0_0_6px_var(--silver)]')} />
               )}
               <span className={cn('text-xs font-medium', isCapture && 'mt-1')}>
                 {item.label}
