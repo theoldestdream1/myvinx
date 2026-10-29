@@ -1,132 +1,368 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useNavigate } from "@/lib/router-compat";
 import { subscribe, type AvatarEvent, type Mood } from "@/lib/avatar/bus";
+import { loadPrefs, savePrefs, subscribePrefs } from "@/lib/avatar/prefs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import { useCaptureMemory } from "@/hooks/useCaptureMemory";
+import { line, getPersonality, PERSONALITY_EVENT, type Personality } from "@/lib/v/personality";
+import { vSpeak, vHush } from "@/lib/v/voice";
 import vSit from "@/assets/v-sit.png";
 import vWave from "@/assets/v-wave.png";
-import { Mic, Search, Bell, X } from "lucide-react";
+import vHappy from "@/assets/v-happy.png";
+import vThink from "@/assets/v-think.png";
+import vListen from "@/assets/v-listen.png";
+import vSmug from "@/assets/v-smug.png";
+import { Mic, Search, Bell, X, Check, Volume2, VolumeX } from "lucide-react";
 
-type State = "idle" | "listening" | "thinking";
-interface Bubble { text: string; mood?: Mood; key: number }
+type Phase = "rest" | "menu" | "prompting" | "listening" | "transcribing" | "saving";
+type Pose = "sit" | "wave" | "happy" | "think" | "listen" | "smug";
+interface Bubble { text: string; key: number; quote?: boolean }
 
-const ASPECT = 530 / 974;
-const GREETINGS = [
-  "I'm here. Tell me anything — I'll remember it.",
-  "Need something? Ask me, I probably saved it.",
-  "Still watching your back. Quietly.",
-];
+const POSES: Record<Pose, string> = { sit: vSit, wave: vWave, happy: vHappy, think: vThink, listen: vListen, smug: vSmug };
+const ASPECT = 0.55;
 
-/** V lives on every app screen: rests above the nav, reacts to the app, grows when she talks. */
+function poseFor(mood: Mood | undefined): Pose {
+  switch (mood) {
+    case "happy": return "happy";
+    case "excited": return "wave";
+    case "thinking": case "focused": case "concerned": return "think";
+    case "listening": case "curious": case "surprised": return "listen";
+    case "sassy": return "smug";
+    default: return "sit";
+  }
+}
+
+const SPRING = { type: "spring" as const, stiffness: 170, damping: 20, mass: 0.9 };
+
+/** V lives on every app screen: idles, wanders between corners, reacts, and takes voice notes in place. */
 export function VCompanion() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [state, setState] = useState<State>("idle");
+  const [phase, setPhase] = useState<Phase>("rest");
   const [bubble, setBubble] = useState<Bubble | null>(null);
-  const [mood, setMood] = useState<Mood>("neutral");
+  const [pose, setPose] = useState<Pose>("sit");
+  const [busy, setBusy] = useState(false); // app-level thinking (e.g. answering a query)
   const [hidden, setHidden] = useState(false);
-  const [menu, setMenu] = useState(false);
+  const [side, setSide] = useState<"right" | "left">("right");
+  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer">(null);
   const [lean, setLean] = useState(0);
+  const [vw, setVw] = useState(() => (typeof window !== "undefined" ? innerWidth : 400));
+  const [voiceOn, setVoiceOn] = useState(() => loadPrefs().voice);
+  const [personality, setP] = useState<Personality>(() => getPersonality());
+  const level = useMotionValue(0);
+  const levelSmooth = useSpring(level, { stiffness: 300, damping: 25 });
+  const ring1 = useTransform(levelSmooth, [0, 1], [1, 1.55]);
+  const ring2 = useTransform(levelSmooth, [0, 1], [1, 1.9]);
+  const ringOpacity = useTransform(levelSmooth, [0, 1], [0.35, 0.9]);
   const bubbleTimer = useRef<number | undefined>(undefined);
-  const moodTimer = useRef<number | undefined>(undefined);
+  const poseTimer = useRef<number | undefined>(undefined);
   const lastY = useRef(0);
   const settle = useRef<number | undefined>(undefined);
+  const lastActivity = useRef(Date.now());
+  const lastQuip = useRef(Date.now());
+  const phaseRef = useRef(phase); phaseRef.current = phase;
+  const reduced = typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  useEffect(() => {
-    const unsub = subscribe((e: AvatarEvent) => {
-      if (e.type === "say") {
-        setMenu(false);
-        setBubble({ text: e.text, mood: e.mood, key: Date.now() });
-        if (e.mood) setMood(e.mood);
-        setState("idle");
-        clearTimeout(bubbleTimer.current);
-        const ms = Math.min(9000, 2600 + e.text.length * 45);
-        bubbleTimer.current = window.setTimeout(() => { setBubble(null); setMood("neutral"); }, ms);
-      } else if (e.type === "emote") {
-        setMood(e.mood);
-        clearTimeout(moodTimer.current);
-        moodTimer.current = window.setTimeout(() => setMood("neutral"), e.ms ?? 1800);
-      } else if (e.type === "state") {
-        setState(e.state);
-      } else if (e.type === "hide") setHidden(true);
-      else if (e.type === "show") setHidden(false);
-    });
-    return () => { unsub(); clearTimeout(bubbleTimer.current); clearTimeout(moodTimer.current); };
+  const say = useCallback((text: string, mood?: Mood, opts: { quote?: boolean; hold?: number } = {}) => {
+    setBubble({ text, key: Date.now(), quote: opts.quote });
+    if (mood) setPose(poseFor(mood));
+    clearTimeout(bubbleTimer.current);
+    clearTimeout(poseTimer.current);
+    const ms = opts.hold ?? Math.min(9000, 2600 + text.length * 45);
+    if (ms > 0) {
+      bubbleTimer.current = window.setTimeout(() => setBubble(null), ms);
+      poseTimer.current = window.setTimeout(() => setPose("sit"), ms + 200);
+    }
   }, []);
 
+  // ---------- voice capture in place ----------
+  const capture = useCaptureMemory(undefined, { silent: true });
+
+  const finish = useCallback((text: string, mood: Mood, cheer = false) => {
+    setPhase("rest");
+    say(text, mood);
+    if (cheer) { setAct("cheer"); window.setTimeout(() => setAct(null), 900); }
+    void vSpeak(text);
+  }, [say]);
+
+  const rec = useVoiceRecording({
+    maxDuration: 60,
+    silenceStopMs: 2200,
+    onLevel: (l) => level.set(l),
+    onTranscription: async (text) => {
+      setPhase("saving");
+      say(text, "thinking", { quote: true, hold: 0 });
+      try {
+        const res = await capture.mutateAsync({ content: text, source: "voice" });
+        if ("queued" in res) finish("No signal. I kept it on this phone and I'll save it when you're back online.", "concerned");
+        else { const l = line("saved", personality); finish(l.text, l.mood, true); }
+      } catch {
+        const l = line("error", personality); finish(l.text, l.mood);
+      }
+    },
+    onError: (err) => {
+      if (/microphone/i.test(err)) finish("I can't hear you. Allow the microphone for this site, then tap me again.", "concerned");
+      else { const l = line("nothingHeard", personality); finish(l.text, l.mood); }
+    },
+  });
+
+  useEffect(() => { if (rec.isProcessing) setPhase("transcribing"); }, [rec.isProcessing]);
+  useEffect(() => { if (rec.isRecording) setPhase("listening"); }, [rec.isRecording]);
+
+  const startTell = useCallback(async () => {
+    if (phaseRef.current !== "rest" && phaseRef.current !== "menu") return;
+    setPhase("prompting");
+    const l = line("listen", getPersonality());
+    say(l.text, "listening", { hold: 0 });
+    await vSpeak(l.text);
+    if (phaseRef.current !== "prompting") return; // cancelled while she spoke
+    await rec.startRecording();
+  }, [rec, say]);
+
+  const cancelTell = useCallback(() => {
+    vHush();
+    if (rec.isRecording) rec.cancelRecording();
+    setPhase("rest");
+    setBubble(null);
+    setPose("sit");
+  }, [rec]);
+
+  // ---------- events from the rest of the app ----------
+  useEffect(() => {
+    const unsub = subscribe((e: AvatarEvent) => {
+      lastActivity.current = Date.now();
+      if (e.type === "say") { if (phaseRef.current === "rest" || phaseRef.current === "menu") { setPhase("rest"); say(e.text, e.mood); } }
+      else if (e.type === "emote") { setPose(poseFor(e.mood)); clearTimeout(poseTimer.current); poseTimer.current = window.setTimeout(() => setPose("sit"), e.ms ?? 1800); }
+      else if (e.type === "state") { setBusy(e.state !== "idle"); if (e.state === "thinking") setPose("think"); else if (e.state === "listening") setPose("listen"); else setPose("sit"); }
+      else if (e.type === "tell") void startTell();
+      else if (e.type === "hide") setHidden(true);
+      else if (e.type === "show") setHidden(false);
+    });
+    return () => { unsub(); clearTimeout(bubbleTimer.current); clearTimeout(poseTimer.current); };
+  }, [say, startTell]);
+
+  useEffect(() => subscribePrefs((p) => setVoiceOn(p.voice)), []);
+  useEffect(() => {
+    const h = (e: Event) => setP((e as CustomEvent<Personality>).detail);
+    addEventListener(PERSONALITY_EVENT, h);
+    return () => removeEventListener(PERSONALITY_EVENT, h);
+  }, []);
+  useEffect(() => {
+    const r = () => setVw(innerWidth);
+    addEventListener("resize", r);
+    return () => removeEventListener("resize", r);
+  }, []);
+
+  // ---------- scroll: she leans into it ----------
   useEffect(() => {
     lastY.current = scrollY;
     const onScroll = () => {
+      lastActivity.current = Date.now();
       const dy = scrollY - lastY.current;
       lastY.current = scrollY;
-      setLean(Math.max(-9, Math.min(9, dy * 0.5)));
+      setLean(Math.max(-10, Math.min(10, dy * 0.6)));
       clearTimeout(settle.current);
-      settle.current = window.setTimeout(() => setLean(0), 160);
+      settle.current = window.setTimeout(() => setLean(0), 180);
     };
     addEventListener("scroll", onScroll, { passive: true });
     return () => { removeEventListener("scroll", onScroll); clearTimeout(settle.current); };
   }, []);
 
+  // ---------- idle life: hops, looks around, wanders, the odd remark ----------
+  useEffect(() => {
+    if (reduced) return;
+    let t: number;
+    const loop = () => {
+      t = window.setTimeout(() => {
+        if (phaseRef.current === "rest" && !document.hidden) {
+          const r = Math.random();
+          const quietFor = Date.now() - lastActivity.current;
+          if (quietFor > 25000 && Date.now() - lastQuip.current > 90000) {
+            lastQuip.current = Date.now();
+            const l = line("idle", getPersonality()); say(l.text, l.mood);
+          } else if (r < 0.25) { setSide((s) => (s === "right" ? "left" : "right")); setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          else if (r < 0.5) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
+          else if (r < 0.7) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          else { setPose("smug"); window.setTimeout(() => setPose((p) => (p === "smug" ? "sit" : p)), 1800); }
+        }
+        loop();
+      }, 7000 + Math.random() * 9000);
+    };
+    loop();
+    return () => clearTimeout(t);
+  }, [reduced, say]);
+
   if (hidden) return null;
 
-  const speaking = !!bubble;
-  const base = isMobile ? 84 : 112;
-  const h = speaking || menu ? base * 1.35 : state === "idle" ? base : base * 1.15;
-  const img = speaking && (mood === "happy" || mood === "excited") ? vWave : vSit;
-  const go = (to: string) => { setMenu(false); navigate(to); };
+  const focus = phase !== "rest" && phase !== "menu";
+  const base = isMobile ? 88 : 116;
+  const h = focus ? Math.min(260, base * 2.4) : bubble || phase === "menu" ? base * 1.3 : busy ? base * 1.15 : base;
+  const w = h * ASPECT;
+  const x = focus ? (vw - w) / 2 : side === "right" ? vw - w - 12 : 12;
+  const bottom = isMobile ? 92 : 20;
+  const y = focus ? -Math.max(80, (typeof window !== "undefined" ? innerHeight : 700) * 0.18) : 0;
+  const shownPose: Pose = phase === "listening" || phase === "prompting" ? "listen" : phase === "transcribing" || phase === "saving" ? "think" : act === "cheer" ? "happy" : act === "poke" ? "smug" : pose;
 
   const tap = () => {
+    lastActivity.current = Date.now();
+    if (phase === "listening") { rec.stopRecording(); return; }
+    if (focus) return;
     if (bubble) { setBubble(null); return; }
-    setMenu((m) => !m);
+    if (phase === "menu") { setPhase("rest"); return; }
+    setAct("poke"); window.setTimeout(() => setAct(null), 500);
+    setPhase("menu");
   };
+  const go = (to: string) => { setPhase("rest"); navigate(to); };
+  const toggleVoice = () => { const p = { ...loadPrefs(), voice: !voiceOn }; savePrefs(p); if (!p.voice) vHush(); };
+
+  const status = phase === "prompting" ? "V is talking" : phase === "listening" ? "Listening… tap V when you're done" : phase === "transcribing" ? "Catching every word…" : phase === "saving" ? "Saving…" : "";
+  const bubbleAlign = focus ? "center" : side;
 
   return (
-    <div
-      className="pointer-events-none fixed right-3 z-40 flex flex-col items-end"
-      style={{ bottom: isMobile ? "calc(env(safe-area-inset-bottom) + 88px)" : 20 }}
-    >
-      {(bubble || menu) && (
-        <div
-          key={bubble?.key ?? "menu"}
-          className="v-bubble pointer-events-auto mb-2 max-w-[240px] rounded-2xl border border-border/70 bg-card/95 px-3.5 py-2.5 text-sm leading-snug text-foreground shadow-xl backdrop-blur-md"
-          role="status"
-          aria-live="polite"
-        >
-          {bubble ? bubble.text : (
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm">{GREETINGS[new Date().getMinutes() % GREETINGS.length]}</p>
-                <button aria-label="Close" onClick={() => setMenu(false)} className="text-muted-foreground"><X className="h-3.5 w-3.5" /></button>
-              </div>
-              <div className="flex gap-1.5">
-                <button onClick={() => go("/capture")} className="flex flex-1 items-center justify-center gap-1 rounded-full bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground"><Mic className="h-3.5 w-3.5" />Tell</button>
-                <button onClick={() => go("/query")} className="flex flex-1 items-center justify-center gap-1 rounded-full border border-border px-2 py-1.5 text-xs"><Search className="h-3.5 w-3.5" />Ask</button>
-                <button onClick={() => go("/intents")} className="flex flex-1 items-center justify-center gap-1 rounded-full border border-border px-2 py-1.5 text-xs"><Bell className="h-3.5 w-3.5" />Remind</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      <button
-        type="button"
-        aria-label="V, your guide. Tap for quick actions."
-        onClick={tap}
-        className="pointer-events-auto relative"
-        style={{
-          height: h,
-          width: h * ASPECT,
-          transform: `rotate(${lean}deg) translateY(${Math.abs(lean) * -0.6}px)`,
-          transition: "height 420ms cubic-bezier(.34,1.56,.64,1), width 420ms cubic-bezier(.34,1.56,.64,1), transform 380ms cubic-bezier(.34,1.56,.64,1)",
-        }}
+    <>
+      <AnimatePresence>
+        {focus && (
+          <motion.div
+            key="dim"
+            className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={phase === "listening" ? undefined : cancelTell}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        className="pointer-events-none fixed left-0 z-50"
+        style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom}px)` }}
+        initial={false}
+        animate={{ x, y }}
+        transition={SPRING}
+        data-testid="v-companion"
+        data-phase={phase}
       >
-        {state !== "idle" && <span className={`v-aura v-aura-${state}`} aria-hidden />}
-        <img
-          src={img}
-          alt=""
-          className={`v-rest-bob relative h-full w-full object-contain drop-shadow-[0_6px_16px_oklch(0.85_0.01_250/0.35)] ${mood === "concerned" ? "v-mood-tilt" : ""}`}
-        />
-      </button>
-    </div>
+        {/* speech bubble / menu */}
+        <AnimatePresence mode="popLayout">
+          {(bubble || phase === "menu") && (
+            <motion.div
+              key={bubble?.key ?? "menu"}
+              initial={{ opacity: 0, scale: 0.8, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 4 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26 }}
+              className="pointer-events-auto absolute bottom-full mb-2 w-[min(260px,80vw)] rounded-2xl border border-border/70 bg-card/95 px-3.5 py-2.5 text-sm leading-snug text-foreground shadow-xl backdrop-blur-md"
+              style={{
+                ...(bubbleAlign === "right" ? { right: 0 } : bubbleAlign === "left" ? { left: 0 } : { left: "50%", translateX: "-50%" }),
+                transformOrigin: bubbleAlign === "right" ? "bottom right" : bubbleAlign === "left" ? "bottom left" : "bottom center",
+              }}
+              role="status"
+              aria-live="polite"
+            >
+              {bubble ? (
+                <p className={bubble.quote ? "font-serif italic text-muted-foreground" : ""}>{bubble.quote ? `“${bubble.text}”` : bubble.text}</p>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm">{line("greet", personality, () => 0).text}</p>
+                    <div className="flex gap-1">
+                      <button aria-label={voiceOn ? "Mute V" : "Let V speak"} onClick={toggleVoice} className="text-muted-foreground">{voiceOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}</button>
+                      <button aria-label="Close" onClick={() => setPhase("rest")} className="text-muted-foreground"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => void startTell()} className="flex flex-1 items-center justify-center gap-1 rounded-full bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground"><Mic className="h-3.5 w-3.5" />Tell V</button>
+                    <button onClick={() => go("/query")} className="flex flex-1 items-center justify-center gap-1 rounded-full border border-border px-2 py-1.5 text-xs"><Search className="h-3.5 w-3.5" />Ask</button>
+                    <button onClick={() => go("/intents")} className="flex flex-1 items-center justify-center gap-1 rounded-full border border-border px-2 py-1.5 text-xs"><Bell className="h-3.5 w-3.5" />Remind</button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* V herself */}
+        <motion.button
+          type="button"
+          aria-label={phase === "listening" ? "Stop and save" : "V, your companion. Tap her."}
+          onClick={tap}
+          className="pointer-events-auto relative block"
+          initial={false}
+          animate={{
+            width: w, height: h,
+            rotate: lean + (act === "look" ? -6 : 0),
+            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : 0,
+            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : 1,
+            scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : 1,
+          }}
+          transition={{
+            width: SPRING, height: SPRING, rotate: SPRING,
+            y: { duration: act === "cheer" ? 0.7 : 0.65, ease: "easeOut" },
+            scaleX: { duration: act === "look" ? 1.5 : 0.45 },
+            scaleY: { duration: 0.45 },
+          }}
+          whileTap={{ scale: 0.92 }}
+        >
+          {/* listening rings react to the voice */}
+          {phase === "listening" && (
+            <>
+              <motion.span aria-hidden className="v-ring" style={{ scale: ring1, opacity: ringOpacity }} />
+              <motion.span aria-hidden className="v-ring v-ring-2" style={{ scale: ring2, opacity: ringOpacity }} />
+            </>
+          )}
+          {(busy || phase === "transcribing" || phase === "saving" || phase === "prompting") && <span className="v-aura v-aura-thinking" aria-hidden />}
+          <span aria-hidden className="v-ground" />
+          <span className={`v-life ${reduced ? "" : "v-life-on"} ${bubble || phase === "prompting" ? "v-talk" : ""}`}>
+            <AnimatePresence initial={false}>
+              <motion.img
+                key={shownPose}
+                src={POSES[shownPose]}
+                alt=""
+                draggable={false}
+                className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_8px_18px_oklch(0.88_0.01_250/0.35)]"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.04 }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+              />
+            </AnimatePresence>
+            {!reduced && <span aria-hidden className="v-glint" style={{ WebkitMaskImage: `url(${POSES[shownPose]})`, maskImage: `url(${POSES[shownPose]})` }} />}
+          </span>
+        </motion.button>
+
+        {/* focus-mode controls */}
+        <AnimatePresence>
+          {focus && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+              className="pointer-events-auto absolute left-1/2 top-full mt-4 flex w-64 -translate-x-1/2 flex-col items-center gap-3"
+            >
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{status}{phase === "listening" ? ` · ${rec.duration}s` : ""}</p>
+              {phase === "listening" && (
+                <div className="flex h-6 items-end gap-1" aria-hidden>
+                  {[0.6, 1, 0.8, 1, 0.6].map((m, i) => (
+                    <motion.span key={i} className="w-1.5 rounded-full bg-foreground/80" style={{ height: useTransformSafe(levelSmooth, m) }} />
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={cancelTell} className="flex items-center gap-1 rounded-full border border-border bg-card/80 px-4 py-2 text-sm text-muted-foreground"><X className="h-4 w-4" />Cancel</button>
+                {phase === "listening" && (
+                  <button onClick={() => rec.stopRecording()} className="flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"><Check className="h-4 w-4" />Done</button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </>
   );
+}
+
+/** bar height from loudness; a plain function (not a hook) so it is safe inside map */
+function useTransformSafe(v: ReturnType<typeof useSpring>, m: number) {
+  return v.get() >= 0 ? `${Math.max(4, Math.min(24, 4 + v.get() * 40 * m))}px` : "4px";
 }
 
 export default VCompanion;
