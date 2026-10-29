@@ -14,8 +14,8 @@ const features = [
 
 const stats = [
   { dot: 'bg-primary', label: 'Saves in seconds' },
-  { dot: 'bg-memory-processed', label: 'Search by meaning' },
-  { dot: 'bg-entity-person', label: 'Reminders that land' },
+  { dot: 'bg-silver', label: 'Search by meaning' },
+  { dot: 'bg-silver-deep', label: 'Reminders that land' },
 ];
 
 function PhoneMock() {
