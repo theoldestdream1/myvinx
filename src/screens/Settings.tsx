@@ -1,38 +1,91 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from "@/lib/router-compat";
+import { ReactNode, useEffect, useState } from 'react';
+import { useNavigate, useSearchParams, Link } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { User, Database, LogOut, Trash2, Download, Loader2 } from 'lucide-react';
+import {
+  Bell, Smartphone, Sparkles, Zap, Send, Mail, CalendarDays, Activity, KeyRound, Download,
+  LogOut, Trash2, ChevronRight, ChevronLeft, SlidersHorizontal, Loader2, Monitor,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { isIOS, isStandalone } from '@/hooks/usePushNotifications';
 import { NotificationCard } from '@/components/settings/NotificationCard';
 import { InstallCard } from '@/components/settings/InstallCard';
 import { AvatarCard } from '@/components/settings/AvatarCard';
 import { TelegramCard } from '@/components/settings/TelegramCard';
 import { EmailCard } from '@/components/settings/EmailCard';
 import { CalendarCard } from '@/components/settings/CalendarCard';
-import { QuickCaptureCard } from '@/components/settings/QuickCaptureCard';
 import { SearchHealthCard } from '@/components/settings/SearchHealthCard';
 import { DeviceKeys } from '@/components/settings/DeviceKeys';
+
+type Device = 'ios' | 'android' | 'desktop';
+function detectDevice(): Device {
+  if (isIOS()) return 'ios';
+  if (/android/i.test(navigator.userAgent)) return 'android';
+  return 'desktop';
+}
+
+type PanelKey = 'notifications' | 'install' | 'v' | 'telegram' | 'email' | 'calendar' | 'search' | 'keys';
+const PANELS: Record<PanelKey, { title: string; desc: string; body: () => ReactNode }> = {
+  notifications: { title: 'Notifications', desc: 'How V reaches you when a reminder lands.', body: () => <NotificationCard /> },
+  install: { title: 'Install Vinx', desc: 'Keep V one tap away on this device.', body: () => <InstallCard /> },
+  v: { title: 'V, your companion', desc: 'How often V moves around and talks.', body: () => <AvatarCard /> },
+  telegram: { title: 'Telegram', desc: 'Send memories to V from a chat.', body: () => <TelegramCard /> },
+  email: { title: 'Email in', desc: 'Forward anything to your private address.', body: () => <EmailCard /> },
+  calendar: { title: 'Calendar feed', desc: 'See your reminders in your calendar app.', body: () => <CalendarCard /> },
+  search: { title: 'Search health', desc: 'Check that V can find everything you saved.', body: () => <SearchHealthCard /> },
+  keys: { title: 'Device keys', desc: 'Keys for phones and scripts that send memories.', body: () => <DeviceKeys /> },
+};
+
+function Row({ icon: Icon, title, hint, onClick, to, tone }: {
+  icon: typeof Bell; title: string; hint?: string; onClick?: () => void; to?: string; tone?: 'danger';
+}) {
+  const inner = (
+    <>
+      <span className={tone === 'danger' ? 'icon-well h-9 w-9 text-destructive' : 'icon-well h-9 w-9'}>
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1 text-left">
+        <span className={`block text-sm font-medium ${tone === 'danger' ? 'text-destructive' : 'text-foreground'}`}>{title}</span>
+        {hint && <span className="block truncate text-xs text-muted-foreground">{hint}</span>}
+      </span>
+      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+    </>
+  );
+  const cls = 'group press flex w-full items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-foreground/[0.03]';
+  return to ? <Link to={to} className={cls}>{inner}</Link> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section>
+      <p className="eyebrow mb-2.5 px-1">{label}</p>
+      <div className="card-ghost overflow-hidden divide-y divide-border/40">{children}</div>
+    </section>
+  );
+}
 
 export default function Settings() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [params, setParams] = useSearchParams();
+  const advanced = params.get('view') === 'advanced';
+  const [panel, setPanel] = useState<PanelKey | null>(null);
+  const [device, setDevice] = useState<Device>('desktop');
+  const [installed, setInstalled] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
+  useEffect(() => { setDevice(detectDevice()); setInstalled(isStandalone()); }, []);
+  useEffect(() => { if (!loading && !user) navigate('/auth'); }, [user, loading, navigate]);
 
   if (loading || !user) {
     return (
@@ -53,13 +106,10 @@ export default function Settings() {
       ]);
       const firstError = [memories, events, entities, intents].find((r) => r.error)?.error;
       if (firstError) throw firstError;
-
       const payload = {
         exported_at: new Date().toISOString(),
-        raw_memories: memories.data,
-        structured_events: events.data,
-        entities: entities.data,
-        pending_intents: intents.data,
+        raw_memories: memories.data, structured_events: events.data,
+        entities: entities.data, pending_intents: intents.data,
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -92,106 +142,120 @@ export default function Settings() {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
+  const deviceLabel = device === 'ios' ? 'iPhone' : device === 'android' ? 'Android' : 'Computer';
+  const DeviceIcon = device === 'desktop' ? Monitor : Smartphone;
+  const initial = (user.email ?? 'V')[0].toUpperCase();
+  const current = panel ? PANELS[panel] : null;
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account and preferences
-          </p>
+      <div className="mx-auto w-full max-w-xl p-5 lg:p-8">
+        {advanced ? (
+          <button onClick={() => setParams({})} className="press eyebrow mb-6 flex items-center gap-1 hover:text-foreground">
+            <ChevronLeft className="h-3.5 w-3.5" /> Settings
+          </button>
+        ) : null}
+        <PageHeader
+          eyebrow={advanced ? 'Advanced' : 'Settings'}
+          title={advanced ? <>Under the <span className="serif-accent">hood</span></> : <>Make V <span className="serif-accent">yours</span></>}
+          sub={advanced ? 'Tools for checking, exporting and connecting. Most people never need these.' : undefined}
+        />
+
+        <div className="rise space-y-7">
+          {!advanced && (
+            <>
+              <div className="card-lit flex items-center gap-4 p-5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/40 font-display text-2xl text-primary-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.4)]">
+                  {initial}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">{user.email}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <DeviceIcon className="h-3.5 w-3.5" /> On {deviceLabel}{installed ? ' · app installed' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <Group label={`On this ${deviceLabel.toLowerCase()}`}>
+                <Row icon={Bell} title="Notifications" hint="Reminder alerts and daily brief" onClick={() => setPanel('notifications')} />
+                {!installed && (
+                  <Row icon={Download} title="Install Vinx" hint={device === 'desktop' ? 'Add to your dock or taskbar' : 'Add to your home screen'} onClick={() => setPanel('install')} />
+                )}
+                {device === 'ios' && <Row icon={Zap} title="Siri & Back Tap" hint="“Hey Siri, tell V” and screenshot capture" to="/setup/shortcuts" />}
+                {device === 'android' && <Row icon={Zap} title="Quick capture" hint="Share sheet, Google Assistant and widgets" to="/setup/shortcuts" />}
+                <Row icon={Sparkles} title="V, your companion" hint="Movement and chattiness" onClick={() => setPanel('v')} />
+              </Group>
+
+              <Group label="Send memories from">
+                <Row icon={Send} title="Telegram" hint="Chat with V" onClick={() => setPanel('telegram')} />
+                <Row icon={Mail} title="Email" hint="Forward to your private address" onClick={() => setPanel('email')} />
+                <Row icon={CalendarDays} title="Calendar" hint="Reminders in your calendar app" onClick={() => setPanel('calendar')} />
+              </Group>
+
+              <Group label="More">
+                <Row icon={SlidersHorizontal} title="Advanced settings" hint="Search health, keys, export, account" onClick={() => setParams({ view: 'advanced' })} />
+                <Row icon={LogOut} title="Sign out" onClick={async () => { await signOut(); navigate('/auth'); }} />
+              </Group>
+            </>
+          )}
+
+          {advanced && (
+            <>
+              <Group label="Diagnostics">
+                <Row icon={Activity} title="Search health" hint="Is everything findable?" onClick={() => setPanel('search')} />
+              </Group>
+              <Group label="Connections">
+                {device === 'desktop' && <Row icon={Zap} title="Shortcuts & automations" hint="Zapier, scripts and phone shortcuts" to="/setup/shortcuts" />}
+                <Row icon={KeyRound} title="Device keys" hint="For phones and scripts that send memories" onClick={() => setPanel('keys')} />
+              </Group>
+              <Group label="Your data">
+                <Row icon={exporting ? Loader2 : Download} title={exporting ? 'Preparing export…' : 'Export all memories'} hint="Download everything as a file" onClick={handleExportData} />
+              </Group>
+              <Group label="Account">
+                <div className="flex items-center justify-between px-4 py-3.5 text-sm">
+                  <span className="text-muted-foreground">Account ID</span>
+                  <span className="font-mono text-xs text-foreground">{user.id.slice(0, 8)}…</span>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <div><Row icon={Trash2} tone="danger" title={deleting ? 'Deleting…' : 'Delete account'} hint="Permanently erase everything" /></div>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This permanently deletes your account, every memory, screenshot, and device key. This cannot be undone.
+                        Consider exporting your memories first.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteAccount}>Yes, delete everything</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </Group>
+            </>
+          )}
         </div>
-
-        {/* Profile Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
-              Profile
-            </CardTitle>
-            <CardDescription>Your account information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground text-sm">Email</Label>
-              <p className="text-foreground font-medium">{user.email}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground text-sm">Account ID</Label>
-              <p className="text-foreground font-mono text-sm">{user.id.slice(0, 8)}...</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <AvatarCard />
-        <InstallCard />
-        <NotificationCard />
-        <QuickCaptureCard />
-        <TelegramCard />
-        <EmailCard />
-        <CalendarCard />
-        <SearchHealthCard />
-
-        {/* Data Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
-              Data Management
-            </CardTitle>
-            <CardDescription>Export or manage your stored data</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start" onClick={handleExportData} disabled={exporting}>
-              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              Export All Memories (JSON)
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Device Keys (Phase 2 — Android ingestion) */}
-        <DeviceKeys />
-
-        {/* Account Actions */}
-        <Card className="border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>Irreversible account actions</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full justify-start" disabled={deleting}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This permanently deletes your account, every memory, screenshot, and device key. This cannot be undone.
-                    Consider exporting your memories first.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount}>Yes, delete everything</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
       </div>
+
+      <Sheet open={!!panel} onOpenChange={(o) => !o && setPanel(null)}>
+        <SheetContent
+          side={isMobile ? 'bottom' : 'right'}
+          className={`${isMobile ? 'max-h-[88vh] rounded-t-3xl' : 'w-full sm:max-w-lg'} overflow-y-auto border-border/50 bg-background/95 backdrop-blur-xl`}
+        >
+          {current && (
+            <>
+              <SheetHeader className="mb-4 text-left">
+                <SheetTitle className="font-display text-3xl font-normal">{current.title}</SheetTitle>
+                <SheetDescription>{current.desc}</SheetDescription>
+              </SheetHeader>
+              <div className="[&>div]:border-0 [&>div]:bg-transparent [&>div]:shadow-none [&_.p-6]:px-0">{current.body()}</div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 }
