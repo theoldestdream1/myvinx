@@ -1,154 +1,66 @@
-import { PageHeader } from '@/components/layout/PageHeader';
-import { useEffect } from 'react';
-import { useNavigate } from "@/lib/router-compat";
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@/lib/router-compat';
 import { useAuth } from '@/hooks/useAuth';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { MemoryEditor } from '@/components/memory/MemoryEditor';
+import { changeMemory, listMemories, memoryQueryKeys, type MemoryAction, type MemoryDraft, type MemoryWithInsights } from '@/lib/memoryLifecycle';
 import { supabase } from '@/integrations/supabase/client';
-import { format, formatDistanceToNow } from 'date-fns';
-import { Calendar, MapPin, Users, Tag } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { ArchiveRestore, Calendar, Loader2, Pencil, Trash2 } from 'lucide-react';
 
 export default function Timeline() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
-  const { data: events, isLoading } = useQuery({
-    queryKey: ['timeline-events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('structured_events')
-        .select('*')
-        .order('event_date', { ascending: false, nullsFirst: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
+  const client = useQueryClient();
+  const [trash, setTrash] = useState(false);
+  const [editing, setEditing] = useState<MemoryWithInsights | null>(null);
+  const [confirm, setConfirm] = useState<{ memory: MemoryWithInsights; action: 'trash' | 'purge' } | null>(null);
+  useEffect(() => { if (!loading && !user) navigate('/auth'); }, [user, loading, navigate]);
+  const library = useInfiniteQuery({
+    queryKey: ['memory-library', user?.id, trash], enabled: !!user, initialPageParam: 0,
+    queryFn: ({ pageParam }) => { if (!user) throw new Error('Sign in required'); return listMemories(user.id, trash, pageParam); },
+    getNextPageParam: (last, pages) => last.length === 50 ? pages.length * 50 : undefined,
   });
-
-  if (loading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <AppLayout>
-      <div className="p-6 lg:p-8">
-        <div className="max-w-3xl mx-auto">
-          <div>
-            <PageHeader eyebrow="Timeline" title={<>Your memories, <span className="serif-accent">in order</span></>} sub="Everything you saved, organised by day." />
+  const mutation = useMutation({
+    mutationFn: ({ memory, action, draft }: { memory: MemoryWithInsights; action: MemoryAction; draft?: MemoryDraft }) => changeMemory(memory, action, draft),
+    onSuccess: (_, { action }) => {
+      setEditing(null); setConfirm(null);
+      memoryQueryKeys.forEach(key => void client.invalidateQueries({ queryKey: [key] }));
+      toast.success(action === 'edit' ? 'Changes saved' : action === 'trash' ? 'Moved to Trash' : action === 'restore' ? 'Memory restored' : 'Permanently deleted');
+      if (action === 'edit') void supabase.functions.invoke('reindex-memories').then(({ error }) => { if (error) toast.warning('Changes saved. Keyword search is ready; smart search needs a retry in Settings.'); });
+    },
+    onError: (e) => { toast.error(e.message); void client.invalidateQueries({ queryKey: ['memory-library'] }); },
+  });
+  if (loading || !user) return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="animate-spin text-primary" /></div>;
+  const memories = library.data?.pages.flat() ?? [];
+  return <AppLayout><div className="mx-auto w-full max-w-3xl px-5 py-8 lg:p-10 pb-36">
+    <PageHeader eyebrow="Timeline" title={<>Your memories, <span className="serif-accent">in order</span></>} sub="Everything you saved, organised by day." />
+    <div className="flex items-center gap-2 border-b border-border pb-4 mb-6">
+      <Button variant={trash ? 'ghost' : 'secondary'} onClick={() => setTrash(false)} aria-pressed={!trash}><Calendar />Memories</Button>
+      <Button variant={trash ? 'secondary' : 'ghost'} onClick={() => setTrash(true)} aria-pressed={trash}><Trash2 />Trash</Button>
+    </div>
+    {library.isPending ? <Loader2 className="mx-auto animate-spin text-muted-foreground" /> : library.isError ? <div role="alert" className="space-y-3"><p className="text-destructive">Couldn’t load your memories.</p><Button variant="outline" onClick={() => void library.refetch()}>Try again</Button></div> : !memories.length ? <div className="py-12 text-center"><p className="font-display text-2xl text-muted-foreground">{trash ? 'Trash is empty.' : 'Nothing saved yet.'}</p></div> : <div className="space-y-4">
+      {memories.map(memory => {
+        const event = memory.structured_events[0];
+        return <article key={memory.id} className="card-ghost beam rounded-lg p-5">
+          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="eyebrow mb-2">{memory.source} · {format(new Date(trash ? memory.deleted_at ?? memory.captured_at : memory.captured_at), 'MMM d, yyyy')}</p><h2 className="font-display text-xl break-words">{event?.title ?? memory.raw_content.slice(0, 100)}</h2></div><Badge variant="outline" className="shrink-0">{trash ? 'Trashed' : memory.status}</Badge></div>
+          <p className="mt-3 text-sm text-muted-foreground whitespace-pre-wrap break-words">{event?.summary ?? memory.raw_content}</p>
+          {event && <details className="mt-3 text-sm text-muted-foreground"><summary className="cursor-pointer">Original note</summary><p className="mt-2 whitespace-pre-wrap break-words">{memory.raw_content}</p></details>}
+          {!!event?.topics?.length && <div className="mt-3 flex flex-wrap gap-2">{event.topics.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}</div>}
+          <div className="mt-4 flex justify-end gap-2">
+            {trash ? <><Button variant="ghost" size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate({ memory, action: 'restore' })}><ArchiveRestore />Restore</Button><Button variant="ghost" size="icon" title="Delete permanently" aria-label="Delete permanently" disabled={mutation.isPending} onClick={() => setConfirm({ memory, action: 'purge' })}><Trash2 className="text-destructive" /></Button></> : <><Button variant="ghost" size="icon" title={memory.status === 'processed' ? 'Edit memory' : 'Available once V finishes reading'} aria-label="Edit memory" disabled={mutation.isPending || memory.status !== 'processed'} onClick={() => setEditing(memory)}><Pencil /></Button><Button variant="ghost" size="icon" title="Move to Trash" aria-label="Move to Trash" disabled={mutation.isPending} onClick={() => setConfirm({ memory, action: 'trash' })}><Trash2 /></Button></>}
           </div>
-
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-32 bg-muted/50 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : events?.length === 0 ? (
-            <Card className="bg-card/50 border-border/50">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
-                  <Calendar className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">No memories yet</h2>
-                <p className="text-muted-foreground">
-                  Capture some memories and let the AI process them to see your timeline.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="relative">
-              {/* Timeline line */}
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-
-              <div className="space-y-6">
-                {events?.map((event) => (
-                  <div key={event.id} className="relative pl-12">
-                    {/* Timeline dot */}
-                    <div className="absolute left-2.5 top-4 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-
-                    <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <h3 className="font-semibold text-foreground">{event.title}</h3>
-                          {event.salience_score && (
-                            <Badge
-                              variant="outline"
-                              className={
-                                event.salience_score > 0.7
-                                  ? 'bg-primary/10 text-primary border-primary/30'
-                                  : 'bg-muted text-muted-foreground'
-                              }
-                            >
-                              {Math.round(event.salience_score * 100)}% important
-                            </Badge>
-                          )}
-                        </div>
-
-                        {event.summary && (
-                          <p className="text-sm text-muted-foreground mb-3">{event.summary}</p>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                          {event.event_date && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>
-                                {format(new Date(event.event_date), 'MMM d, yyyy')} (
-                                {formatDistanceToNow(new Date(event.event_date), { addSuffix: true })})
-                              </span>
-                            </div>
-                          )}
-
-                          {event.location && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-
-                          {event.participants && event.participants.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              <span>{event.participants.join(', ')}</span>
-                            </div>
-                          )}
-
-                          {event.topics && event.topics.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Tag className="w-3 h-3" />
-                              <span>{event.topics.join(', ')}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {event.emotional_tone && (
-                          <Badge variant="secondary" className="mt-3 text-xs">
-                            {event.emotional_tone}
-                          </Badge>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </AppLayout>
-  );
+        </article>;
+      })}
+      {library.hasNextPage && <Button className="w-full" variant="outline" disabled={library.isFetchingNextPage} onClick={() => void library.fetchNextPage()}>{library.isFetchingNextPage && <Loader2 className="animate-spin" />}Load more</Button>}
+    </div>}
+    {editing && <MemoryEditor key={editing.id} memory={editing} busy={mutation.isPending} onClose={() => setEditing(null)} onSave={draft => mutation.mutate({ memory: editing, action: 'edit', draft })} />}
+    <Dialog open={!!confirm} onOpenChange={open => { if (!open && !mutation.isPending) setConfirm(null); }}><DialogContent className="w-[calc(100%-2rem)] rounded-lg"><DialogHeader><DialogTitle>{confirm?.action === 'purge' ? 'Delete permanently?' : 'Move to Trash?'}</DialogTitle><DialogDescription>{confirm?.action === 'purge' ? 'This removes the note, insights, search entries, linked reminders and attachments. It cannot be undone.' : 'V won’t recall this memory or send its linked reminders while it’s in Trash. You can restore it.'}</DialogDescription></DialogHeader><div className="flex justify-end gap-2"><Button variant="ghost" disabled={mutation.isPending} onClick={() => setConfirm(null)}>Cancel</Button><Button variant={confirm?.action === 'purge' ? 'destructive' : 'default'} disabled={mutation.isPending} onClick={() => { if (confirm) mutation.mutate(confirm); }}>{mutation.isPending && <Loader2 className="animate-spin" />}{confirm?.action === 'purge' ? 'Delete permanently' : 'Move to Trash'}</Button></div></DialogContent></Dialog>
+  </div></AppLayout>;
 }
