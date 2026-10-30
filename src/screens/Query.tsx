@@ -15,6 +15,7 @@ import { describeRepair, repairSearch } from '@/lib/searchRepair';
 import { format } from 'date-fns';
 import { Search, Send, Loader2, MessageSquare, User, Image as ImageIcon } from 'lucide-react';
 import { RichAnswer } from '@/components/query/RichAnswer';
+import { line } from '@/lib/v/personality';
 
 interface Source {
   index: number;
@@ -148,6 +149,7 @@ export default function Query() {
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsQuerying(true);
     vAgent.thinking();
+    { const l = line('search'); vAgent.say(l.text, l.mood); }
 
     try {
       const { data, error } = await supabase.functions.invoke('query-memories', {
