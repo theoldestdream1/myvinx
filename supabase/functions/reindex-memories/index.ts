@@ -30,9 +30,10 @@ serve(async (req) => {
         .from("structured_events")
         .select("id, raw_memory_id, title, summary, participants, topics, location")
         .eq("user_id", userId)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(2000),
-      supabase.from("memory_vectors").select("structured_event_id, embedding_model, embedding").eq("user_id", userId).limit(5000),
+      supabase.from("memory_vectors").select("structured_event_id, embedding_model, embedding").eq("user_id", userId).is("deleted_at", null).limit(5000),
     ]);
     if (evErr) throw evErr;
     if (vecErr) throw vecErr;

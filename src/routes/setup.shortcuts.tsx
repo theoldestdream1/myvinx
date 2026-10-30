@@ -5,6 +5,8 @@ export const Route = createFileRoute("/setup/shortcuts")({
   ssr: false,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Set up Siri & shortcuts · Vinx" },
       { name: "description", content: "Set up Hey Siri, Back Tap and other shortcuts for Vinx." },
       { property: "og:title", content: "Set up Siri & shortcuts · Vinx" },

@@ -210,15 +210,13 @@ export default function Share() {
   const undo = async () => {
     if (!saved) return;
     setPhase('undoing');
-    // Deleting the memory cascades to its events, reminders and search rows (see migration)
-    const { error } = await supabase.from('raw_memories').delete().eq('id', saved.id);
+    const { error } = await supabase.from('raw_memories').update({ deleted_at: new Date().toISOString() }).eq('id', saved.id).eq('user_id', user?.id ?? '');
     if (error) {
       toast.error("Couldn't undo that. You can delete it from your dashboard.");
       setPhase('saved');
       return;
     }
-    if (saved.mediaPath) await supabase.storage.from('memory-media').remove([saved.mediaPath]);
-    ['recent-memories', 'dashboard-stats', 'timeline-events', 'all-intents', 'upcoming-intents'].forEach((k) =>
+    ['memory-library', 'recent-memories', 'dashboard-stats', 'daily-brief', 'timeline-events', 'all-intents', 'upcoming-intents'].forEach((k) =>
       queryClient.invalidateQueries({ queryKey: [k] }),
     );
     setPhase('undone');

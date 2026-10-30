@@ -25,13 +25,14 @@ export async function repairSearch(): Promise<RepairResult> {
 
   const stale = new Date(Date.now() - 2 * 60_000).toISOString();
   const [failed, stranded] = await Promise.all([
-    supabase.from('raw_memories').select('id').eq('status', 'failed').order('created_at', { ascending: false }).limit(10),
-    supabase.from('raw_memories').select('id').eq('status', 'pending').lt('created_at', stale).limit(10),
+    supabase.from('raw_memories').select('id').is('deleted_at', null).eq('status', 'failed').order('created_at', { ascending: false }).limit(10),
+    supabase.from('raw_memories').select('id').is('deleted_at', null).eq('status', 'pending').lt('created_at', stale).limit(10),
   ]);
   // Screenshots processed before images were described properly: re-read them (replacing, not duplicating)
   const shots = await supabase
     .from('raw_memories')
     .select('id, metadata')
+    .is('deleted_at', null)
     .eq('status', 'processed')
     .not('media_url', 'is', null)
     .order('created_at', { ascending: false })

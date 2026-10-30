@@ -152,6 +152,7 @@ serve(async (req) => {
         .from("raw_memories")
         .select("id, raw_content, source, captured_at, status, media_url, metadata, structured_events(id, title, summary)")
         .eq("user_id", userId)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(RECENT_POOL);
 
@@ -189,6 +190,7 @@ serve(async (req) => {
     const { data: intents } = await supabase
       .from("pending_intents")
       .select("intent_text, trigger_type, trigger_value, trigger_date")
+      .is("deleted_at", null)
       .eq("user_id", userId)
       .in("status", ["pending", "reminded"])
       .order("trigger_date", { ascending: true, nullsFirst: false })
