@@ -46,7 +46,9 @@ export function VCompanion() {
   const [busy, setBusy] = useState(false); // app-level thinking (e.g. answering a query)
   const [hidden, setHidden] = useState(false);
   const [side, setSide] = useState<"right" | "left">("right");
-  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer">(null);
+  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer" | "walk">(null);
+  const [spot, setSpot] = useState(1); // 0 = left edge, 1 = right edge
+  const [rise, setRise] = useState(0); // drifts up off the floor now and then
   const [lean, setLean] = useState(0);
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? innerWidth : 400));
   const [voiceOn, setVoiceOn] = useState(() => loadPrefs().voice);
@@ -170,7 +172,7 @@ export function VCompanion() {
     return () => { removeEventListener("scroll", onScroll); clearTimeout(settle.current); };
   }, []);
 
-  // ---------- idle life: hops, looks around, wanders, the odd remark ----------
+  // ---------- idle life: drifts around, hops, looks around, the odd remark ----------
   useEffect(() => {
     if (reduced) return;
     let t: number;
@@ -182,13 +184,21 @@ export function VCompanion() {
           if (quietFor > 25000 && Date.now() - lastQuip.current > 90000) {
             lastQuip.current = Date.now();
             const l = line("idle", getPersonality()); say(l.text, l.mood);
-          } else if (r < 0.25) { setSide((s) => (s === "right" ? "left" : "right")); setAct("hop"); window.setTimeout(() => setAct(null), 700); }
-          else if (r < 0.5) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
-          else if (r < 0.7) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          } else if (r < 0.5) {
+            // glide somewhere new, staying near the edges so she doesn't cover content
+            setSpot((s) => {
+              const n = s > 0.5 ? Math.random() * 0.35 : 0.65 + Math.random() * 0.35;
+              setSide(n > 0.5 ? "right" : "left");
+              return n;
+            });
+            setAct("walk"); window.setTimeout(() => setAct(null), 2200);
+          } else if (r < 0.65) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
+          else if (r < 0.8) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          else if (r < 0.9) { setRise(-30 - Math.random() * 60); window.setTimeout(() => setRise(0), 2600); }
           else { setPose("smug"); window.setTimeout(() => setPose((p) => (p === "smug" ? "sit" : p)), 1800); }
         }
         loop();
-      }, 7000 + Math.random() * 9000);
+      }, 3500 + Math.random() * 4500);
     };
     loop();
     return () => clearTimeout(t);
