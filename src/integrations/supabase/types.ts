@@ -302,6 +302,30 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_media_cleanup: {
+        Row: {
+          created_at: string
+          id: string
+          paths: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paths: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paths?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_vectors: {
         Row: {
           app_package: string | null
