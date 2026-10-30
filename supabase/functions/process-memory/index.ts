@@ -119,6 +119,11 @@ serve(async (req) => {
       return json({ error: "Forbidden" }, 403);
     }
 
+    if (memory.deleted_at) {
+      memoryId = undefined;
+      return json({ success: true, skipped: "trashed" });
+    }
+
     if (force) {
       await supabase.from("pending_intents").delete().eq("raw_memory_id", memoryId);
       await supabase.from("structured_events").delete().eq("raw_memory_id", memoryId); // cascades to search rows

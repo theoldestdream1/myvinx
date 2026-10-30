@@ -80,9 +80,9 @@ export default function Quick() {
   const undo = async () => {
     if (!saved) return;
     if (saved.queued) { await removeQueued(saved.id); setSaved(null); setPhase('ready'); return; }
-    await supabase.from('raw_memories').delete().eq('id', saved.id);
-    if (saved.mediaPath) await supabase.storage.from('memory-media').remove([saved.mediaPath]);
-    ['recent-memories', 'dashboard-stats', 'timeline-events', 'all-intents', 'upcoming-intents'].forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
+    const { error: undoError } = await supabase.from('raw_memories').update({ deleted_at: new Date().toISOString() }).eq('id', saved.id).eq('user_id', user?.id ?? '');
+    if (undoError) { setError('Could not undo. Try again.'); return; }
+    ['memory-library', 'recent-memories', 'dashboard-stats', 'daily-brief', 'timeline-events', 'all-intents', 'upcoming-intents'].forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
     setSaved(null);
     setPhase('ready');
   };

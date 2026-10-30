@@ -302,12 +302,37 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_media_cleanup: {
+        Row: {
+          created_at: string
+          id: string
+          paths: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paths: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paths?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_vectors: {
         Row: {
           app_package: string | null
           capture_type: string | null
           content_text: string
           created_at: string
+          deleted_at: string | null
           embedding: string | null
           embedding_model: string | null
           embedding_text: string | null
@@ -323,6 +348,7 @@ export type Database = {
           capture_type?: string | null
           content_text: string
           created_at?: string
+          deleted_at?: string | null
           embedding?: string | null
           embedding_model?: string | null
           embedding_text?: string | null
@@ -338,6 +364,7 @@ export type Database = {
           capture_type?: string | null
           content_text?: string
           created_at?: string
+          deleted_at?: string | null
           embedding?: string | null
           embedding_model?: string | null
           embedding_text?: string | null
@@ -368,6 +395,7 @@ export type Database = {
       pending_intents: {
         Row: {
           created_at: string
+          deleted_at: string | null
           id: string
           intent_text: string
           priority: number | null
@@ -383,6 +411,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           intent_text: string
           priority?: number | null
@@ -398,6 +427,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           intent_text?: string
           priority?: number | null
@@ -506,6 +536,7 @@ export type Database = {
           capture_type: string | null
           captured_at: string
           created_at: string
+          deleted_at: string | null
           id: string
           last_attempt_at: string | null
           media_url: string | null
@@ -515,6 +546,7 @@ export type Database = {
           raw_content: string
           source: Database["public"]["Enums"]["memory_source"]
           status: Database["public"]["Enums"]["memory_status"]
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -522,6 +554,7 @@ export type Database = {
           capture_type?: string | null
           captured_at?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           last_attempt_at?: string | null
           media_url?: string | null
@@ -531,6 +564,7 @@ export type Database = {
           raw_content: string
           source?: Database["public"]["Enums"]["memory_source"]
           status?: Database["public"]["Enums"]["memory_status"]
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -538,6 +572,7 @@ export type Database = {
           capture_type?: string | null
           captured_at?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           last_attempt_at?: string | null
           media_url?: string | null
@@ -547,6 +582,7 @@ export type Database = {
           raw_content?: string
           source?: Database["public"]["Enums"]["memory_source"]
           status?: Database["public"]["Enums"]["memory_status"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -555,6 +591,7 @@ export type Database = {
         Row: {
           confidence_score: number | null
           created_at: string
+          deleted_at: string | null
           emotional_tone: string | null
           event_date: string | null
           id: string
@@ -571,6 +608,7 @@ export type Database = {
         Insert: {
           confidence_score?: number | null
           created_at?: string
+          deleted_at?: string | null
           emotional_tone?: string | null
           event_date?: string | null
           id?: string
@@ -587,6 +625,7 @@ export type Database = {
         Update: {
           confidence_score?: number | null
           created_at?: string
+          deleted_at?: string | null
           emotional_tone?: string | null
           event_date?: string | null
           id?: string
@@ -698,6 +737,42 @@ export type Database = {
           summary: string
           title: string
         }[]
+      }
+      memory_lifecycle: {
+        Args: {
+          _action: string
+          _content?: string
+          _event_id?: string
+          _expected_updated_at: string
+          _id: string
+          _summary?: string
+          _title?: string
+          _topics?: string[]
+        }
+        Returns: {
+          app_package: string | null
+          capture_type: string | null
+          captured_at: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          last_attempt_at: string | null
+          media_url: string | null
+          metadata: Json | null
+          platform: string | null
+          process_attempts: number
+          raw_content: string
+          source: Database["public"]["Enums"]["memory_source"]
+          status: Database["public"]["Enums"]["memory_status"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "raw_memories"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       memory_search_stats: { Args: { _user_id: string }; Returns: Json }
       or_tsquery: { Args: { _text: string }; Returns: unknown }

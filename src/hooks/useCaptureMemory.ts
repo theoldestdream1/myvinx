@@ -149,6 +149,7 @@ export function useCaptureMemory(onCaptured?: () => void, options: { silent?: bo
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['recent-memories'] });
+      queryClient.invalidateQueries({ queryKey: ['memory-library'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (!options.silent) {
         toast.success(data.media_url ? 'Screenshot saved! Reading it now...' : 'Memory captured! Processing...');
@@ -169,6 +170,7 @@ export function useCaptureMemory(onCaptured?: () => void, options: { silent?: bo
         queryClient.invalidateQueries({ queryKey: ['recent-memories'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         queryClient.invalidateQueries({ queryKey: ['timeline-events'] });
+        queryClient.invalidateQueries({ queryKey: ['memory-library'] });
         queryClient.invalidateQueries({ queryKey: ['all-intents'] });
         queryClient.invalidateQueries({ queryKey: ['upcoming-intents'] });
       });

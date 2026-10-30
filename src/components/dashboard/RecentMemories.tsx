@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { MessageSquare, Mail, Calendar, FileText, Mic, Image, Globe, BellRing, PenLine } from 'lucide-react';
 import { TaskCard } from './TaskCard';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/lib/router-compat';
 
 const sourceIcons: Record<string, typeof MessageSquare> = {
   whatsapp: MessageSquare,
@@ -42,6 +44,7 @@ export function RecentMemories() {
       const { data, error } = await supabase
         .from('raw_memories')
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -70,6 +73,7 @@ export function RecentMemories() {
 
   return (
     <div className="space-y-4">
+      <Button variant="link" asChild><Link to="/timeline">Manage memories</Link></Button>
       {memories.map((memory) => {
         const Icon = sourceIcons[memory.source] || PenLine;
         return (
