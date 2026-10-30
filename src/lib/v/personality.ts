@@ -88,6 +88,8 @@ const L: Record<Personality, Record<LineKind, VLine[]>> = {
     ],
     poke: [{ text: 'Hello again.', mood: 'happy' }],
     greet: [{ text: 'Welcome back.', mood: 'happy' }],
+    search: [{ text: 'Let me look through your memories.', mood: 'thinking' }, { text: 'One moment, finding it.', mood: 'thinking' }],
+    home: [{ text: 'Back in my spot.', mood: 'happy' }],
   },
   efficient: {
     listen: [{ text: 'Go.', mood: 'listening' }, { text: 'Listening.', mood: 'listening' }],
@@ -97,17 +99,22 @@ const L: Record<Personality, Record<LineKind, VLine[]>> = {
     idle: [{ text: 'Ready.', mood: 'neutral' }],
     poke: [{ text: 'Yes?', mood: 'curious' }],
     greet: [{ text: 'Ready.', mood: 'neutral' }],
+    search: [{ text: 'Searching.', mood: 'thinking' }],
+    home: [{ text: 'Home.', mood: 'neutral' }],
   },
 };
 
-let last: Partial<Record<string, string>> = {};
-/** A line of the given kind; never repeats the previous one when there's a choice. */
+let last: Record<string, string[]> = {};
+/** A line of the given kind; avoids the last few lines used for that kind (up to half the pool). */
 export function line(kind: LineKind, p: Personality = getPersonality(), rng: () => number = Math.random): VLine {
   const pool = L[p][kind];
   const key = `${p}:${kind}`;
-  const options = pool.length > 1 ? pool.filter((l) => l.text !== last[key]) : pool;
-  const chosen = options[Math.min(options.length - 1, Math.floor(rng() * options.length))];
-  last[key] = chosen.text;
+  const recent = last[key] ?? [];
+  const memory = Math.min(3, Math.floor(pool.length / 2));
+  const options = pool.filter((l) => !recent.slice(-memory).includes(l.text));
+  const from = options.length ? options : pool;
+  const chosen = from[Math.min(from.length - 1, Math.floor(rng() * from.length))];
+  last[key] = [...recent, chosen.text].slice(-5);
   return chosen;
 }
 export function __resetLines() { last = {}; }
