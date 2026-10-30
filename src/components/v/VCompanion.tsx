@@ -338,7 +338,7 @@ export function VCompanion() {
             width: w, height: h,
             rotate: act === "walk" ? [lean - 5, lean + 5] : lean + (act === "look" ? -6 : 0),
             y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [0, -5, 0] : 0,
-            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? walkDir * -1 * -1 : 1,
+            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? walkDir : 1,
             scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "walk" ? [1, 0.97, 1] : 1,
           }}
           transition={{
