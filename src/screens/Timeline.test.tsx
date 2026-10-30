@@ -47,14 +47,14 @@ describe('Timeline memory lifecycle interactions', () => {
     expect(state.change).not.toHaveBeenCalled();
     fireEvent.click(screen.getAllByRole('button', { name: 'Move to Trash' }).at(-1) as HTMLElement);
     await waitFor(() => expect(state.rows[0].deleted_at).not.toBeNull());
-    fireEvent.click(screen.getByRole('button', { name: 'Trash', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Trash$/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Restore' }));
     await waitFor(() => expect(state.rows[0].deleted_at).toBeNull());
-    fireEvent.click(screen.getByRole('button', { name: 'Memories', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Memories$/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Move to Trash' }));
     fireEvent.click(screen.getAllByRole('button', { name: 'Move to Trash' }).at(-1) as HTMLElement);
     await waitFor(() => expect(state.rows[0].deleted_at).not.toBeNull());
-    fireEvent.click(screen.getByRole('button', { name: 'Trash', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Trash$/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Delete permanently' }));
     expect(state.rows).toHaveLength(1);
     fireEvent.click(screen.getAllByRole('button', { name: 'Delete permanently' }).at(-1) as HTMLElement);
