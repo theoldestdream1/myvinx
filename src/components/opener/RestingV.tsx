@@ -7,6 +7,8 @@ import vThink from "@/assets/v-think.png";
 import vListen from "@/assets/v-listen.png";
 import vSmug from "@/assets/v-smug.png";
 import { REST, restHeight } from "./restingV";
+import { line } from "@/lib/v/personality";
+import type { Mood } from "@/lib/avatar/bus";
 
 type Pose = "sit" | "wave" | "happy" | "think" | "listen" | "smug";
 const POSES: Record<Pose, string> = { sit: vSit, wave: vWave, happy: vHappy, think: vThink, listen: vListen, smug: vSmug };
@@ -27,6 +29,8 @@ const TAPS: { text: string; pose: Pose }[] = [
 ];
 
 const SPRING = { type: "spring" as const, stiffness: 120, damping: 18, mass: 1 };
+const POSE_FOR: Partial<Record<Mood, Pose>> = { happy: "happy", sassy: "smug", curious: "listen", listening: "listen", thinking: "think" };
+const vl = (k: Parameters<typeof line>[0]) => { const l = line(k, "sassy"); return { text: l.text, pose: POSE_FOR[l.mood] ?? "wave" }; };
 const pick = <T,>(a: T[], not?: T) => { let x = a[Math.floor(Math.random() * a.length)]; if (x === not && a.length > 1) x = a[(a.indexOf(x) + 1) % a.length]; return x; };
 
 /** V living on the landing page: breathes, roams, reacts to scroll and taps, grows when she talks. */
@@ -34,9 +38,13 @@ export function RestingV() {
   const [h, setH] = useState(restHeight());
   const [vw, setVw] = useState(innerWidth);
   const [vh, setVh] = useState(innerHeight);
-  const [spot, setSpot] = useState(1); // 0 left .. 1 right
+  const [spot, setSpot] = useState(0); // 0 = home seat (bottom left) .. 1 right
+  const [walkMs, setWalkMs] = useState(2000);
+  const [tp, setTp] = useState(false);
+  const stayHomeUntil = useRef(0);
   const [rise, setRise] = useState(0);
   const [lean, setLean] = useState(0);
+  const [face, setFace] = useState(1);
   const [pose, setPose] = useState<Pose>("sit");
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
   const [act, setAct] = useState<null | "hop" | "look" | "walk" | "poke">(null);
@@ -83,15 +91,19 @@ export function RestingV() {
       if (!alive) return;
       if (!busy.current) {
         const r = Math.random();
-        if (r < 0.35) {
-          setAct("walk");
-          setSpot((s) => (s > 0.5 ? Math.random() * 0.45 : 0.55 + Math.random() * 0.45));
-          later(() => setAct(null), 1900);
+        if (r < 0.35 && Date.now() > stayHomeUntil.current) {
+          setSpot((s) => {
+            const n = s > 0.5 ? Math.random() * 0.45 : 0.55 + Math.random() * 0.45;
+            const ms = Math.max(1600, Math.min(6000, (Math.abs(n - s) * innerWidth / 60) * 1000));
+            setWalkMs(ms); setFace(n > s ? 1 : -1); setAct("walk");
+            later(() => setAct((a) => (a === "walk" ? null : a)), ms);
+            return n;
+          });
         } else if (r < 0.5) {
           setRise(Math.random() < 0.5 ? 0 : 40 + Math.random() * Math.min(160, innerHeight * 0.2));
         } else if (r < 0.65) { setAct("hop"); later(() => setAct(null), 700); }
         else if (r < 0.8) { setAct("look"); later(() => setAct(null), 1500); }
-        else say(pick(QUIPS, lastLine.current as never));
+        else say(Math.random() < 0.6 ? vl("idle") : pick(QUIPS, lastLine.current as never));
       }
       later(tick, 4000 + Math.random() * 4000);
     };
@@ -102,15 +114,34 @@ export function RestingV() {
   const talking = !!bubble;
   const scale = talking ? 1.45 : 1;
   const w = h * REST.aspect;
-  const x = REST.margin + spot * Math.max(0, vw - w - REST.margin * 2) - (vw - REST.margin - w);
-  const walkDir = 0;
+  const x = spot * Math.max(0, vw - w - REST.margin * 2);
+  const goHome = () => {
+    stayHomeUntil.current = Date.now() + 45000;
+    setTp(true); setAct(null); setBubble(null); setRise(0);
+    later(() => { setSpot(0); setPose("sit"); later(() => { setTp(false); say(vl("home")); }, 60); }, 220);
+  };
 
   return (
+    <>
+    <AnimatePresence>
+      {(spot > 0.08 || act === "walk") && !tp && (
+        <motion.button
+          key="home" type="button" onClick={goHome}
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+          className="fixed z-40 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
+          style={{ left: REST.margin, bottom: REST.margin }}
+          aria-label="Tap to bring V back to her seat" data-testid="v-home"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" aria-hidden />Tap to return
+        </motion.button>
+      )}
+    </AnimatePresence>
     <motion.div
       className="pointer-events-none fixed z-40"
-      style={{ right: REST.margin, bottom: REST.margin, height: h, width: w }}
-      animate={{ x, y: -rise - (talking ? 20 : 0) }}
-      transition={act === "walk" ? { x: { type: "spring", stiffness: 26, damping: 10, mass: 1.2 }, y: SPRING } : SPRING}
+      style={{ left: REST.margin, bottom: REST.margin, height: h, width: w }}
+      animate={{ x, y: -rise - (talking ? 20 : 0), opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
+      transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: "linear" }, y: SPRING, opacity: { duration: 0.25 }, scale: SPRING } : { ...SPRING }}
+      data-testid="resting-v"
     >
       <AnimatePresence>
         {bubble && (
@@ -135,21 +166,21 @@ export function RestingV() {
       <motion.button
         type="button"
         aria-label="V, your Vinx guide"
-        onClick={() => { setAct("poke"); later(() => setAct(null), 500); say(pick(TAPS, lastLine.current as never)); }}
+        onClick={() => { setAct("poke"); later(() => setAct(null), 500); say(Math.random() < 0.5 ? vl("poke") : pick(TAPS, lastLine.current as never)); }}
         className="pointer-events-auto relative h-full w-full origin-bottom"
         animate={{
           scale,
-          rotate: lean + (act === "look" ? -7 : act === "walk" ? (spot > 0.5 ? 6 : -6) + walkDir : 0),
-          y: act === "hop" ? [0, -24, 0, -5, 0] : act === "walk" ? [0, -9, 0, -9, 0, -7, 0] : 0,
-          scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : 1,
-          scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : 1,
+          rotate: act === "walk" ? [lean - 5, lean + 5] : lean + (act === "look" ? -7 : 0),
+          y: act === "hop" ? [0, -24, 0, -5, 0] : act === "walk" ? [0, -5, 0] : 0,
+          scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? face : 1,
+          scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "walk" ? [1, 0.97, 1] : 1,
         }}
         transition={{
           scale: { type: "spring", stiffness: 180, damping: 14 },
-          rotate: { type: "spring", stiffness: 140, damping: 12 },
-          y: { duration: act === "walk" ? 1.9 : 0.65, ease: "easeInOut" },
-          scaleX: { duration: act === "look" ? 1.5 : 0.45 },
-          scaleY: { duration: 0.45 },
+          rotate: act === "walk" ? { duration: 0.42, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { type: "spring", stiffness: 140, damping: 12 },
+          y: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.65, ease: "easeInOut" },
+          scaleX: { duration: act === "look" ? 1.5 : 0.3 },
+          scaleY: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.45 },
         }}
       >
         <div className="v-life v-life-on absolute inset-0">
@@ -166,6 +197,7 @@ export function RestingV() {
         </div>
       </motion.button>
     </motion.div>
+    </>
   );
 }
 

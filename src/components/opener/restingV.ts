@@ -9,7 +9,7 @@ export function restRect() {
   const height = restHeight();
   const width = height * REST.aspect;
   return {
-    left: window.innerWidth - REST.margin - width,
+    left: REST.margin,
     top: window.innerHeight - REST.margin - height,
     width,
     height,
