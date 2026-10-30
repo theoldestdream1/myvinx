@@ -237,7 +237,7 @@ export default function Query() {
                 <Card
                   className={`max-w-[80%] ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'text-foreground'
                       : 'bg-card/50 border-border/50'
                   }`}
                 >
