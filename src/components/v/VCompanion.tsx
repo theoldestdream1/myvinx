@@ -45,9 +45,13 @@ export function VCompanion() {
   const [pose, setPose] = useState<Pose>("sit");
   const [busy, setBusy] = useState(false); // app-level thinking (e.g. answering a query)
   const [hidden, setHidden] = useState(false);
-  const [side, setSide] = useState<"right" | "left">("right");
+  const [side, setSide] = useState<"right" | "left">("left");
   const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer" | "walk">(null);
-  const [spot, setSpot] = useState(1); // 0 = left edge, 1 = right edge
+  const [spot, setSpot] = useState(0); // 0 = home seat (bottom left), 1 = right edge
+  const [walkMs, setWalkMs] = useState(2000);
+  const [tp, setTp] = useState(false); // teleporting home
+  const [menuLine, setMenuLine] = useState("");
+  const stayHomeUntil = useRef(0);
   const [rise, setRise] = useState(0); // drifts up off the floor now and then
   const [lean, setLean] = useState(0);
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? innerWidth : 400));
@@ -185,14 +189,16 @@ export function VCompanion() {
           if (quietFor > 25000 && Date.now() - lastQuip.current > 90000) {
             lastQuip.current = Date.now();
             const l = line("idle", getPersonality()); say(l.text, l.mood);
-          } else if (r < 0.5) {
-            // glide somewhere new, staying near the edges so she doesn't cover content
+          } else if (r < 0.5 && Date.now() > stayHomeUntil.current) {
+            // stroll somewhere new at a steady walking pace, facing where she's going
             setSpot((s) => {
               const n = s > 0.5 ? Math.random() * 0.35 : 0.65 + Math.random() * 0.35;
-              setSide(n > 0.5 ? "right" : "left");
+              const ms = Math.max(1600, Math.min(6000, (Math.abs(n - s) * innerWidth / 60) * 1000));
+              setSide(n > s ? "right" : "left");
+              setWalkMs(ms);
+              setAct("walk"); window.setTimeout(() => setAct((a) => (a === "walk" ? null : a)), ms);
               return n;
             });
-            setAct("walk"); window.setTimeout(() => setAct(null), 2200);
           } else if (r < 0.65) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
           else if (r < 0.8) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
           else if (r < 0.9) { setRise(-30 - Math.random() * 60); window.setTimeout(() => setRise(0), 2600); }
@@ -224,7 +230,17 @@ export function VCompanion() {
     if (bubble) { setBubble(null); return; }
     if (phase === "menu") { setPhase("rest"); return; }
     setAct("poke"); window.setTimeout(() => setAct(null), 500);
+    setMenuLine(line("greet", getPersonality()).text);
     setPhase("menu");
+  };
+  const goHome = () => {
+    lastActivity.current = Date.now();
+    stayHomeUntil.current = Date.now() + 45000;
+    setTp(true); setAct(null); setBubble(null); setPhase("rest"); setRise(0);
+    window.setTimeout(() => {
+      setSpot(0); setSide("left"); setPose("sit");
+      window.setTimeout(() => { setTp(false); const l = line("home", getPersonality()); say(l.text, l.mood); }, 60);
+    }, 220);
   };
   const go = (to: string) => { setPhase("rest"); navigate(to); };
   const toggleVoice = () => { const p = { ...loadPrefs(), voice: !voiceOn }; savePrefs(p); if (!p.voice) vHush(); };
@@ -246,12 +262,29 @@ export function VCompanion() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {!focus && (spot > 0.08 || act === "walk") && !tp && (
+          <motion.button
+            key="home"
+            type="button"
+            onClick={goHome}
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+            className="fixed left-3 z-50 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
+            style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom - 4}px)` }}
+            aria-label="Tap to bring V back to her seat"
+            data-testid="v-home"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" aria-hidden />Tap to return
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       <motion.div
         className="pointer-events-none fixed left-0 z-50"
         style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom}px)` }}
         initial={false}
-        animate={{ x, y }}
-        transition={act === "walk" ? { x: { type: "spring", stiffness: 28, damping: 11, mass: 1.2 }, y: { type: "spring", stiffness: 40, damping: 12 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 } }}
+        animate={{ x, y, opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
+        transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: "linear" }, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } }}
         data-testid="v-companion"
         data-phase={phase}
       >
@@ -277,7 +310,7 @@ export function VCompanion() {
               ) : (
                 <div className="space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm">{line("greet", personality, () => 0).text}</p>
+                    <p className="text-sm">{menuLine}</p>
                     <div className="flex gap-1">
                       <button aria-label={voiceOn ? "Mute V" : "Let V speak"} onClick={toggleVoice} className="text-muted-foreground">{voiceOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}</button>
                       <button aria-label="Close" onClick={() => setPhase("rest")} className="text-muted-foreground"><X className="h-3.5 w-3.5" /></button>
@@ -303,16 +336,17 @@ export function VCompanion() {
           initial={false}
           animate={{
             width: w, height: h,
-            rotate: lean + (act === "look" ? -6 : act === "walk" ? walkDir * 9 : 0),
-            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [0, -10, 0, -10, 0, -8, 0] : 0,
-            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : 1,
-            scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : 1,
+            rotate: act === "walk" ? [lean - 5, lean + 5] : lean + (act === "look" ? -6 : 0),
+            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [0, -5, 0] : 0,
+            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? walkDir : 1,
+            scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "walk" ? [1, 0.97, 1] : 1,
           }}
           transition={{
-            width: SPRING, height: SPRING, rotate: { type: "spring", stiffness: 90, damping: 14 },
-            y: { duration: act === "cheer" ? 0.7 : act === "walk" ? 1.9 : 0.65, ease: "easeInOut" },
-            scaleX: { duration: act === "look" ? 1.5 : 0.45 },
-            scaleY: { duration: 0.45 },
+            width: SPRING, height: SPRING,
+            rotate: act === "walk" ? { duration: 0.42, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { type: "spring", stiffness: 90, damping: 14 },
+            y: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: act === "cheer" ? 0.7 : 0.65, ease: "easeInOut" },
+            scaleX: { duration: act === "look" ? 1.5 : 0.3 },
+            scaleY: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.45 },
           }}
           whileTap={{ scale: 0.92 }}
         >
