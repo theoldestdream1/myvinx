@@ -25,6 +25,20 @@ export async function listMemories(userId: string, trash: boolean, offset = 0): 
   return data ?? [];
 }
 
+export async function retryAttachmentCleanup(userId: string) {
+  const { data, error } = await supabase.from('memory_media_cleanup').select('*').eq('user_id', userId).limit(50);
+  if (error) throw error;
+  for (const job of data ?? []) {
+    const paths = job.paths.filter(p => p.startsWith(`${userId}/`));
+    if (paths.length) {
+      const { error: fileError } = await supabase.storage.from('memory-media').remove(paths);
+      if (fileError) throw new Error('Attachment cleanup is pending. Your deletion will be retried when you reopen Timeline.');
+    }
+    const { error: finishError } = await supabase.from('memory_media_cleanup').delete().eq('id', job.id).eq('user_id', userId);
+    if (finishError) throw finishError;
+  }
+}
+
 export async function changeMemory(memory: Memory, action: MemoryAction, draft?: MemoryDraft) {
   validateMemoryAction(memory, action, draft);
   const { data, error } = await supabase.rpc('memory_lifecycle', {
@@ -37,7 +51,7 @@ export async function changeMemory(memory: Memory, action: MemoryAction, draft?:
     const paths = [memory.media_url, meta?.audio_path].filter((p): p is string => !!p && p.startsWith(`${memory.user_id}/`));
     if (paths.length) {
       const { error: mediaError } = await supabase.storage.from('memory-media').remove(paths);
-      if (mediaError) throw new Error('Note deleted, but its attachment could not be removed. Contact us before considering deletion complete.');
+      if (mediaError) throw new Error('Note deleted, but its attachment could not be removed. Cleanup is queued and will retry when you reopen Timeline.');
     }
   }
   return data;

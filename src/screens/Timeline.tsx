@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MemoryEditor } from '@/components/memory/MemoryEditor';
-import { changeMemory, listMemories, memoryQueryKeys, type MemoryAction, type MemoryDraft, type MemoryWithInsights } from '@/lib/memoryLifecycle';
+import { changeMemory, listMemories, retryAttachmentCleanup, memoryQueryKeys, type MemoryAction, type MemoryDraft, type MemoryWithInsights } from '@/lib/memoryLifecycle';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -22,6 +22,7 @@ export default function Timeline() {
   const [editing, setEditing] = useState<MemoryWithInsights | null>(null);
   const [confirm, setConfirm] = useState<{ memory: MemoryWithInsights; action: 'trash' | 'purge' } | null>(null);
   useEffect(() => { if (!loading && !user) navigate('/auth'); }, [user, loading, navigate]);
+  useEffect(() => { if (user) void retryAttachmentCleanup(user.id).catch(e => toast.warning(e.message)); }, [user?.id]);
   const library = useInfiniteQuery({
     queryKey: ['memory-library', user?.id, trash], enabled: !!user, initialPageParam: 0,
     queryFn: ({ pageParam }) => { if (!user) throw new Error('Sign in required'); return listMemories(user.id, trash, pageParam); },

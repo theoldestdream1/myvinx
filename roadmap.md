@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Milestone 3
-- [ ] Memory lifecycle: edit notes and insights, Trash, restore, permanent deletion; verify ownership and downstream exclusion
+- [ ] Memory lifecycle: implemented edit notes/insights, Trash, restore, permanent deletion; automated checks run, real signed-in flow blocked by externally managed authentication
 - [ ] Recurring reminders and flexible snooze
 - [ ] Link reading and summaries
 - [ ] Timeline filters and tag management

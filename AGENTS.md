@@ -13,4 +13,5 @@
 - App screens live in `src/screens/` and are mounted by thin route files in `src/routes/` (all `ssr: false`, since they rely on browser APIs and the localStorage session).
 - Screens keep react-router-style navigation through `src/lib/router-compat.tsx`, an adapter over TanStack Router; never install react-router-dom.
 - Memory lifecycle uses an owner-scoped atomic database RPC with timestamp conflict checks; inherited Trash visibility protects derived insights, vectors, and reminders, including background writes.
+- Permanent memory deletion queues attachment cleanup transactionally; owner-scoped retries run when Timeline opens so storage failures remain recoverable.
 - Backend logic stays in the existing Supabase edge functions under `supabase/functions/` (17 functions with their own auth); scheduled jobs authenticate with a vault-held secret checked by `verify_cron_secret`.
