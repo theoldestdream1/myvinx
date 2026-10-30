@@ -46,7 +46,9 @@ export function VCompanion() {
   const [busy, setBusy] = useState(false); // app-level thinking (e.g. answering a query)
   const [hidden, setHidden] = useState(false);
   const [side, setSide] = useState<"right" | "left">("right");
-  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer">(null);
+  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer" | "walk">(null);
+  const [spot, setSpot] = useState(1); // 0 = left edge, 1 = right edge
+  const [rise, setRise] = useState(0); // drifts up off the floor now and then
   const [lean, setLean] = useState(0);
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? innerWidth : 400));
   const [voiceOn, setVoiceOn] = useState(() => loadPrefs().voice);
@@ -63,7 +65,8 @@ export function VCompanion() {
   const lastActivity = useRef(Date.now());
   const lastQuip = useRef(Date.now());
   const phaseRef = useRef(phase); phaseRef.current = phase;
-  const reduced = typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // V is the product: her idle life stays on even when the phone asks for fewer animations.
+  const reduced = false;
 
   const say = useCallback((text: string, mood?: Mood, opts: { quote?: boolean; hold?: number } = {}) => {
     setBubble({ text, key: Date.now(), quote: opts.quote });
@@ -170,7 +173,7 @@ export function VCompanion() {
     return () => { removeEventListener("scroll", onScroll); clearTimeout(settle.current); };
   }, []);
 
-  // ---------- idle life: hops, looks around, wanders, the odd remark ----------
+  // ---------- idle life: drifts around, hops, looks around, the odd remark ----------
   useEffect(() => {
     if (reduced) return;
     let t: number;
@@ -182,13 +185,21 @@ export function VCompanion() {
           if (quietFor > 25000 && Date.now() - lastQuip.current > 90000) {
             lastQuip.current = Date.now();
             const l = line("idle", getPersonality()); say(l.text, l.mood);
-          } else if (r < 0.25) { setSide((s) => (s === "right" ? "left" : "right")); setAct("hop"); window.setTimeout(() => setAct(null), 700); }
-          else if (r < 0.5) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
-          else if (r < 0.7) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          } else if (r < 0.5) {
+            // glide somewhere new, staying near the edges so she doesn't cover content
+            setSpot((s) => {
+              const n = s > 0.5 ? Math.random() * 0.35 : 0.65 + Math.random() * 0.35;
+              setSide(n > 0.5 ? "right" : "left");
+              return n;
+            });
+            setAct("walk"); window.setTimeout(() => setAct(null), 2200);
+          } else if (r < 0.65) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
+          else if (r < 0.8) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          else if (r < 0.9) { setRise(-30 - Math.random() * 60); window.setTimeout(() => setRise(0), 2600); }
           else { setPose("smug"); window.setTimeout(() => setPose((p) => (p === "smug" ? "sit" : p)), 1800); }
         }
         loop();
-      }, 7000 + Math.random() * 9000);
+      }, 3500 + Math.random() * 4500);
     };
     loop();
     return () => clearTimeout(t);
@@ -200,9 +211,10 @@ export function VCompanion() {
   const base = isMobile ? 88 : 116;
   const h = focus ? Math.min(260, base * 2.4) : bubble || phase === "menu" ? base * 1.3 : busy ? base * 1.15 : base;
   const w = h * ASPECT;
-  const x = focus ? (vw - w) / 2 : side === "right" ? vw - w - 12 : 12;
+  const x = focus ? (vw - w) / 2 : 12 + spot * Math.max(0, vw - w - 24);
   const bottom = isMobile ? 92 : 20;
-  const y = focus ? -Math.max(80, (typeof window !== "undefined" ? innerHeight : 700) * 0.18) : 0;
+  const y = focus ? -Math.max(80, (typeof window !== "undefined" ? innerHeight : 700) * 0.18) : bubble || phase === "menu" ? 0 : rise;
+  const walkDir = side === "right" ? 1 : -1;
   const shownPose: Pose = phase === "listening" || phase === "prompting" ? "listen" : phase === "transcribing" || phase === "saving" ? "think" : act === "cheer" ? "happy" : act === "poke" ? "smug" : pose;
 
   const tap = () => {
@@ -239,7 +251,7 @@ export function VCompanion() {
         style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom}px)` }}
         initial={false}
         animate={{ x, y }}
-        transition={SPRING}
+        transition={act === "walk" ? { x: { type: "spring", stiffness: 28, damping: 11, mass: 1.2 }, y: { type: "spring", stiffness: 40, damping: 12 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 } }}
         data-testid="v-companion"
         data-phase={phase}
       >
@@ -291,14 +303,14 @@ export function VCompanion() {
           initial={false}
           animate={{
             width: w, height: h,
-            rotate: lean + (act === "look" ? -6 : 0),
-            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : 0,
+            rotate: lean + (act === "look" ? -6 : act === "walk" ? walkDir * 9 : 0),
+            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [0, -10, 0, -10, 0, -8, 0] : 0,
             scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : 1,
             scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : 1,
           }}
           transition={{
-            width: SPRING, height: SPRING, rotate: SPRING,
-            y: { duration: act === "cheer" ? 0.7 : 0.65, ease: "easeOut" },
+            width: SPRING, height: SPRING, rotate: { type: "spring", stiffness: 90, damping: 14 },
+            y: { duration: act === "cheer" ? 0.7 : act === "walk" ? 1.9 : 0.65, ease: "easeInOut" },
             scaleX: { duration: act === "look" ? 1.5 : 0.45 },
             scaleY: { duration: 0.45 },
           }}

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { describeRepair, repairSearch } from '@/lib/searchRepair';
 import { format } from 'date-fns';
 import { Search, Send, Loader2, MessageSquare, User, Image as ImageIcon } from 'lucide-react';
+import { RichAnswer } from '@/components/query/RichAnswer';
 
 interface Source {
   index: number;
@@ -236,12 +237,12 @@ export default function Query() {
                 <Card
                   className={`max-w-[80%] ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'text-foreground'
                       : 'bg-card/50 border-border/50'
                   }`}
                 >
                   <CardContent className="p-3">
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    {msg.role === 'assistant' ? <RichAnswer text={msg.content} /> : <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
                     {msg.sources && msg.sources.length > 0 && <SourceCards sources={msg.sources} kind={msg.sourcesKind} />}
                     {msg.search && i === messages.length - 1 && <SearchNotice info={msg.search} />}
                   </CardContent>
