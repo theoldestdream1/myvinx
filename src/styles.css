@@ -310,7 +310,7 @@
 .v-ring { position: absolute; left: 50%; top: 45%; width: 150%; aspect-ratio: 1; translate: -50% -50%; border-radius: 9999px; pointer-events: none;
   border: 1.5px solid oklch(0.92 0.01 250 / .7); box-shadow: 0 0 24px oklch(0.92 0.01 250 / .35), inset 0 0 18px oklch(0.75 0.12 240 / .25); }
 .v-ring-2 { border-color: oklch(0.75 0.12 240 / .45); }
-@media (prefers-reduced-motion: reduce) { .v-life-on, .v-life-on > img, .v-talk, .v-glint { animation: none; } }
+
 
 .capture-orb { color: var(--foreground);
   background: radial-gradient(circle at 35% 30%, oklch(0.98 0.005 250 / .35), transparent 55%), linear-gradient(160deg, oklch(0.45 0.02 250), oklch(0.22 0.02 250));

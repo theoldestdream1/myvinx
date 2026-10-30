@@ -65,7 +65,8 @@ export function VCompanion() {
   const lastActivity = useRef(Date.now());
   const lastQuip = useRef(Date.now());
   const phaseRef = useRef(phase); phaseRef.current = phase;
-  const reduced = typeof window !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // V is the product: her idle life stays on even when the phone asks for fewer animations.
+  const reduced = false;
 
   const say = useCallback((text: string, mood?: Mood, opts: { quote?: boolean; hold?: number } = {}) => {
     setBubble({ text, key: Date.now(), quote: opts.quote });
