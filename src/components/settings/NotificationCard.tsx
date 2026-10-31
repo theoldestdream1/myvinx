@@ -27,7 +27,7 @@ export function NotificationCard() {
       const { data, error } = await supabase
         .from('profiles')
         .select('reminders_enabled, daily_brief_enabled, brief_hour')
-        .eq('id', user!.id)
+        .eq('id', user?.id ?? '')
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -36,7 +36,7 @@ export function NotificationCard() {
 
   const updatePrefs = useMutation({
     mutationFn: async (patch: { reminders_enabled?: boolean; daily_brief_enabled?: boolean; brief_hour?: number }) => {
-      const { error } = await supabase.from('profiles').update(patch).eq('id', user!.id);
+      const { error } = await supabase.from('profiles').update(patch).eq('id', user?.id ?? '');
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notification-prefs'] }),
@@ -58,7 +58,9 @@ export function NotificationCard() {
   };
 
   let deviceControl: React.ReactNode;
-  if (!push.supported) {
+  if (push.needsInstall) {
+    deviceControl = <p className="text-sm text-muted-foreground">On iPhone (iOS 16.4 or newer), add Vinx to your Home Screen in Safari, open it from there, then enable notifications here.</p>;
+  } else if (!push.supported) {
     deviceControl = (
       <p className="text-sm text-muted-foreground">
         This browser doesn't support push notifications. Try Chrome, Edge, Firefox, or Safari (iPhone: add Vinx to your Home Screen first).
@@ -70,10 +72,14 @@ export function NotificationCard() {
         On iPhone, notifications only work once Vinx is on your Home Screen. Tap Share, then "Add to Home Screen", open it from there, and come back to this page.
       </p>
     );
+  } else if (push.configLoading) {
+    deviceControl = <p role="status" className="text-sm text-muted-foreground">Checking notification availability…</p>;
+  } else if (push.configError) {
+    deviceControl = <Button variant="outline" onClick={push.reloadConfig}>Retry notification setup</Button>;
   } else if (!push.configured) {
     deviceControl = (
       <p className="text-sm text-muted-foreground">
-        Push isn't set up yet on this deployment (missing <code>VITE_VAPID_PUBLIC_KEY</code>).
+        Notifications are temporarily unavailable. Telegram and calendar reminders remain available.
       </p>
     );
   } else if (push.permission === 'denied') {

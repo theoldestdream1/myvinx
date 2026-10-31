@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+const PUSH_CONFIG_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-reminders`;
 
 function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4);
@@ -44,7 +44,22 @@ export function usePushNotifications() {
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'Notification' in window;
-  const configured = !!VAPID_PUBLIC_KEY;
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+  const [configError, setConfigError] = useState(false);
+  const configured = !!publicKey;
+  const loadConfig = useCallback(async () => {
+    setConfigLoading(true);
+    setConfigError(false);
+    try {
+      const response = await fetch(PUSH_CONFIG_URL, { signal: AbortSignal.timeout(10000) });
+      if (!response.ok) throw new Error('Configuration unavailable');
+      const data = await response.json();
+      setPublicKey(data.configured && typeof data.publicKey === 'string' ? data.publicKey : null);
+    } catch { setConfigError(true); }
+    finally { setConfigLoading(false); }
+  }, []);
+  useEffect(() => { void loadConfig(); }, [loadConfig]);
   // iPhones only allow web push for apps added to the Home Screen
   const needsInstall = isIOS() && !isStandalone();
 
@@ -72,7 +87,8 @@ export function usePushNotifications() {
 
   const createSubscription = useCallback(
     async (reg: ServiceWorkerRegistration) => {
-      const options = { userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!) };
+      if (!publicKey) throw new Error('Notifications are not configured');
+      const options = { userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) };
       try {
         return await reg.pushManager.subscribe(options);
       } catch (e) {
@@ -85,7 +101,7 @@ export function usePushNotifications() {
         throw e;
       }
     },
-    [],
+    [publicKey],
   );
 
   // On load: reflect real state, and heal drift (browser rotated/dropped the subscription)
@@ -115,18 +131,23 @@ export function usePushNotifications() {
   }, [supported, configured, userId, getRegistration, createSubscription, register]);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!supported || !configured) return false;
+    if (!supported || !configured || !userId || needsInstall) return false;
+    // Request immediately within the tap; iOS loses user activation after an awaited lookup.
+    const permissionRequest = Notification.requestPermission();
     setBusy(true);
     try {
-      const reg = await getRegistration();
-      if (!reg) {
-        toast.error('Notifications work in the installed / production app, not in the dev preview.');
-        return false;
-      }
-      const result = await Notification.requestPermission();
+      const result = await permissionRequest;
       setPermission(result);
       if (result !== 'granted') {
-        toast.error('Notifications are blocked. Allow them in your browser or phone settings, then try again.');
+        toast.error('Notifications were not allowed. You can try again or change your browser settings.');
+        return false;
+      }
+      let reg = await getRegistration();
+      if (reg && !reg.active) {
+        reg = await Promise.race([navigator.serviceWorker.ready, new Promise<null>(resolve => setTimeout(() => resolve(null), 10000))]);
+      }
+      if (!reg) {
+        toast.error('Notifications work in the installed / production app, not in the dev preview.');
         return false;
       }
       const sub = (await reg.pushManager.getSubscription()) ?? (await createSubscription(reg));
@@ -141,7 +162,7 @@ export function usePushNotifications() {
     } finally {
       setBusy(false);
     }
-  }, [supported, configured, getRegistration, createSubscription, register]);
+  }, [supported, configured, userId, needsInstall, getRegistration, createSubscription, register]);
 
   const unsubscribe = useCallback(async () => {
     setBusy(true);
@@ -149,8 +170,9 @@ export function usePushNotifications() {
       const reg = await getRegistration();
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
-        await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-        await sub.unsubscribe();
+        const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        if (error) throw error;
+        if (!await sub.unsubscribe()) throw new Error('Browser did not remove subscription');
       }
       setSubscribed(false);
       toast.success('Notifications turned off on this device');
@@ -162,5 +184,5 @@ export function usePushNotifications() {
     }
   }, [getRegistration]);
 
-  return { supported, configured, needsInstall, permission, subscribed, busy, subscribe, unsubscribe };
+  return { supported, configured, configLoading, configError, reloadConfig: loadConfig, needsInstall, permission, subscribed, busy, subscribe, unsubscribe };
 }
