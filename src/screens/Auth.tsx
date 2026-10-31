@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
+import { PASSWORD_RULES, passwordProblem } from '@/lib/password';
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Enter your password'),
   displayName: z.string().min(2, 'Name must be at least 2 characters').optional(),
 });
 
@@ -46,6 +47,8 @@ export default function Auth() {
         : { email, password };
       
       authSchema.parse(validationData);
+      const weak = isSignUp ? passwordProblem(password) : null;
+      if (weak) { toast.error(weak); return; }
 
       if (isSignUp) {
         const { error } = await signUp(email, password, displayName);
@@ -156,6 +159,14 @@ export default function Auth() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {isSignUp && (
+                <ul aria-label="Password requirements" className="grid grid-cols-2 gap-1 pt-1 text-xs">
+                  {PASSWORD_RULES.map(r => {
+                    const ok = r.test(password);
+                    return <li key={r.id} className={ok ? 'text-primary' : 'text-muted-foreground'}>{ok ? '✓' : '•'} {r.label}</li>;
+                  })}
+                </ul>
+              )}
             </div>
 
             <Button

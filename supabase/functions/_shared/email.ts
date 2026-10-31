@@ -54,12 +54,12 @@ export function senderAuthenticated(headers: Array<{ Name: string; Value: string
   return !spfFail && (spf || dkim || spfAr);
 }
 
-export const emailConfigured = () => !!Deno.env.get("RESEND_API_KEY") && !!Deno.env.get("EMAIL_FROM");
+export const emailConfigured = () => !!Deno.env.get("RESEND_API_KEY");
 
 export async function sendEmail(to: string, subject: string, text: string, html?: string): Promise<{ ok: boolean; error?: string }> {
   const key = Deno.env.get("RESEND_API_KEY");
-  const from = Deno.env.get("EMAIL_FROM");
-  if (!key || !from) return { ok: false, error: "email not configured" };
+  const from = Deno.env.get("EMAIL_FROM") || "Vinx <hello@myvinx.tech>";
+  if (!key) return { ok: false, error: "email not configured" };
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
