@@ -126,6 +126,7 @@ export default function Intents() {
 
   return (
     <AppLayout>
+      {timing && <ReminderTiming reminder={timing.reminder} mode={timing.mode} onClose={() => setTiming(null)} onSaved={() => { refreshAll(); toast.success(timing.mode === 'snooze' ? 'Reminder snoozed' : 'Schedule saved'); }} />}
       <div className="p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
           <div>
