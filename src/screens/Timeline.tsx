@@ -52,6 +52,10 @@ export default function Timeline() {
         return <article key={memory.id} className="card-ghost beam rounded-lg p-5">
           <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="eyebrow mb-2">{memory.source} · {format(new Date(trash ? memory.deleted_at ?? memory.captured_at : memory.captured_at), 'MMM d, yyyy')}</p><h2 className="font-display text-xl break-words">{event?.title ?? memory.raw_content.slice(0, 100)}</h2></div><Badge variant="outline" className="shrink-0">{trash ? 'Trashed' : memory.status}</Badge></div>
           <p className="mt-3 text-sm text-muted-foreground whitespace-pre-wrap break-words">{event?.summary ?? memory.raw_content}</p>
+          {(() => { const l = (memory.metadata as { link?: { url: string; final_url?: string; title?: string; site?: string; error?: string } } | null)?.link; if (!l) return null; const href = l.final_url || l.url; let host = href; try { host = new URL(href).hostname.replace(/^www\./, ''); } catch { /* keep raw */ } return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm hover:bg-muted">
+              <span className="min-w-0 flex-1"><span className="block truncate text-foreground">{l.title || host}</span><span className="block truncate text-xs text-muted-foreground">{l.site || host}{l.error ? ' · couldn’t read this page' : ''}</span></span>
+            </a>); })()}
           {event && <details className="mt-3 text-sm text-muted-foreground"><summary className="cursor-pointer">Original note</summary><p className="mt-2 whitespace-pre-wrap break-words">{memory.raw_content}</p></details>}
           {!!event?.topics?.length && <div className="mt-3 flex flex-wrap gap-2">{event.topics.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}</div>}
           <div className="mt-4 flex justify-end gap-2">
