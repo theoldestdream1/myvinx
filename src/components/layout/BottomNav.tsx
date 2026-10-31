@@ -1,27 +1,31 @@
+import { useState } from 'react';
 import { NavLink, useLocation } from "@/lib/router-compat";
+import { appNavigation } from '@/lib/appNavigation';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Plus,
   Search,
   Clock,
-  Settings,
+  Settings, Bell, Menu,
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Home', path: '/dashboard' },
   { icon: Clock, label: 'Timeline', path: '/timeline' },
   { icon: Plus, label: 'Capture', path: '/capture' },
-  { icon: Search, label: 'Query', path: '/query' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: Bell, label: 'Reminders', path: '/intents' },
 ];
 
 export function BottomNav() {
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/92 backdrop-blur-md shadow-[inset_0_1px_0_var(--rim),0_-12px_40px_-12px_oklch(0_0_0/0.8)]">
-      <div className="flex items-center justify-around h-16 px-2">
+    <><nav aria-label="Main navigation" className="device-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
+      <div className="grid grid-cols-5 items-center h-16 px-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isCapture = item.path === '/capture';
@@ -31,7 +35,7 @@ export function BottomNav() {
               key={item.path}
               to={item.path}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-[60px]',
+                'flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 rounded-lg transition-colors duration-150',
                 isCapture && 'relative -mt-7',
                 isActive
                   ? 'text-primary'
@@ -51,7 +55,8 @@ export function BottomNav() {
             </NavLink>
           );
         })}
+        <Button variant="ghost" className="h-16 flex-col gap-1 px-1 text-muted-foreground" aria-label="More pages" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /><span className="text-xs">More</span></Button>
       </div>
-    </nav>
+    </nav><Sheet open={open} onOpenChange={setOpen}><SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-background rounded-t-lg"><SheetHeader><SheetTitle>Everything in Vinx</SheetTitle><SheetDescription>Make yourself at home.</SheetDescription></SheetHeader><nav className="grid grid-cols-2 gap-2 mt-4" aria-label="All pages">{appNavigation.map(item => <Button key={item.path} asChild variant={location.pathname === item.path ? 'secondary' : 'ghost'} className="h-auto min-h-12 justify-start whitespace-normal text-left"><NavLink to={item.path} onClick={() => setOpen(false)}><item.icon className="shrink-0 h-4 w-4" /><span className="min-w-0">{item.label}</span></NavLink></Button>)}</nav></SheetContent></Sheet></>
   );
 }

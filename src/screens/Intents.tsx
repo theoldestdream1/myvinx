@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
+import { NotificationCard } from '@/components/settings/NotificationCard';
 import { useEffect, useState } from 'react';
 import { ReminderTiming } from '@/components/reminders/ReminderTiming';
 import { changeReminder, repeatLabel, type Reminder } from '@/lib/reminders';
@@ -133,6 +134,7 @@ export default function Intents() {
             <PageHeader eyebrow="Reminders" title={<>What V is <span className="serif-accent">holding</span> for you</>} sub="Future actions V picked up from your memories." />
           </div>
 
+          <section data-tour="notifications" className="mb-8"><NotificationCard /></section>
           {isError ? <div role="alert" className="py-8"><p className="text-destructive">Could not load reminders.</p><Button variant="outline" onClick={() => refetch()}>Try again</Button></div> : isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -145,7 +147,7 @@ export default function Intents() {
                 <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
                   <Bell className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">No intents yet</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-2">No reminders yet</h2>
                 <p className="text-muted-foreground">
                   The AI will detect future intentions from your memories like "remind me", "I should", etc.
                 </p>
