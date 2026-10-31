@@ -3,7 +3,7 @@
 ## Milestone 3
 - [ ] Memory lifecycle: implemented edit notes/insights, Trash, restore, permanent deletion; automated checks run, real signed-in flow blocked by externally managed authentication
 - [ ] Recurring reminders and flexible snooze
-- [ ] Link reading and summaries
+- [x] Link reading and summaries (built; awaiting signed-in live capture test)
 - [ ] Timeline filters and tag management
 - [ ] Decide location-trigger approach
 
