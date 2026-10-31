@@ -6,6 +6,7 @@ import { transcribeAudio } from "../_shared/transcribe.ts";
 import { chatCompletion, CHAT_MODEL, lovableKey } from "../_shared/ai.ts";
 import { embed, toPgVector } from "../_shared/embeddings.ts";
 import { buildSearchText, parseImageUnderstanding } from "../_shared/text.ts";
+import { fetchLink, findFirstUrl, type LinkInfo } from "../_shared/link.ts";
 
 /** "Saturday, October 3, 2026 at 2:15 PM" in the user's timezone (falls back to UTC). */
 function formatNow(date: Date, tz: string) {
@@ -203,6 +204,23 @@ serve(async (req) => {
         .eq("id", memoryId);
     }
 
+    // ---- Step 1b: read a shared link (never fatal; a dead link still keeps the memory) ----
+    let link: LinkInfo | null = (memory.metadata as any)?.link ?? null;
+    const linkUrl = findFirstUrl(memory.raw_content || "");
+    if (linkUrl && (!link || link.url !== linkUrl || force)) {
+      link = await fetchLink(linkUrl);
+      if (link.error) console.warn("link read failed:", linkUrl, link.error);
+      memory.metadata = { ...(memory.metadata || {}), link };
+      await supabase.from("raw_memories").update({ metadata: memory.metadata }).eq("id", memoryId);
+    }
+    const linkText = link && !link.error ? [
+      `LINKED PAGE: ${link.final_url || link.url}`,
+      link.site ? `SITE: ${link.site}` : "",
+      link.title ? `PAGE TITLE: ${link.title}` : "",
+      link.description ? `PAGE DESCRIPTION: ${link.description}` : "",
+      link.text ? `PAGE TEXT (use it to summarise what the page is about):\n${link.text.slice(0, 5000)}` : "",
+    ].filter(Boolean).join("\n") : link?.error ? `LINKED PAGE: ${link.url} (could not be read: ${link.error})` : "";
+
     // ---- Step 2: structure it -----------------------------------------------------------
     const { data: profile } = await supabase
       .from("profiles")
@@ -220,7 +238,8 @@ serve(async (req) => {
       userNote ? `Content: ${userNote}` : memory.media_url ? "Content: (image only, no caption)" : `Content: ${memory.raw_content}`,
       imageDescription ? `IMAGE DESCRIPTION: ${imageDescription}` : "",
       imageText ? `IMAGE TEXT: ${imageText}` : "",
-      `Metadata: ${JSON.stringify({ ...(memory.metadata || {}), extracted_text: undefined, image_description: undefined })}`,
+      linkText,
+      `Metadata: ${JSON.stringify({ ...(memory.metadata || {}), extracted_text: undefined, image_description: undefined, link: undefined })}`,
     ].filter(Boolean).join("\n");
 
     const aiResponse = await chatCompletion(CHAT_MODEL, [
@@ -295,6 +314,7 @@ serve(async (req) => {
       ev.summary,
       imageDescription,
       imageText,
+      link && !link.error ? [link.title, link.site, link.description, link.final_url || link.url, link.text?.slice(0, 2000)].filter(Boolean).join("\n") : "",
       (ev.participants || []).join(", "),
       (ev.topics || []).join(", "),
       ev.location,
