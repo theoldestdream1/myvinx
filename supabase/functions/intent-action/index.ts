@@ -21,6 +21,7 @@ serve(async (req) => {
         .from("pending_intents")
         .update({ status: "resolved", resolved_at: new Date().toISOString() })
         .eq("id", intentId);
+      // The recurrence trigger advances only the first completion.
       if (error) throw error;
       return json({ ok: true, action });
     }
@@ -34,7 +35,8 @@ serve(async (req) => {
           reminded_at: null,
           trigger_date: new Date(Date.now() + mins * 60_000).toISOString(),
         })
-        .eq("id", intentId);
+        .eq("id", intentId).is("deleted_at", null).in("status", ["pending", "reminded"])
+        .select("id");
       if (error) throw error;
       return json({ ok: true, action, minutes: mins });
     }

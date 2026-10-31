@@ -420,16 +420,18 @@ async function handleCallback(supabase: any, cq: any) {
   }
 
   if (kind === "d" || kind === "s") { // reminder: done / snooze
-    const { data: intent } = await supabase.from("pending_intents").select("id, user_id, intent_text").eq("id", id).maybeSingle();
+    const { data: intent } = await supabase.from("pending_intents").select("id, user_id, intent_text").eq("id", id).is("deleted_at", null).in("status", ["pending", "reminded"]).maybeSingle();
     if (!intent || intent.user_id !== link.user_id) return void (await answerCallbackQuery(cq.id, "I can't find that reminder."));
     if (kind === "d") {
-      await supabase.from("pending_intents").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", id);
+      const { data: changed, error } = await supabase.from("pending_intents").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", id).eq("user_id", link.user_id).is("deleted_at", null).in("status", ["pending", "reminded"]).select("id");
+      if (error || !changed?.length) return void (await answerCallbackQuery(cq.id, "Could not update that reminder. Open Vinx to check."));
       await answerCallbackQuery(cq.id, "Done");
       return void (await editMessageText(chatId, messageId, `✓ Done: ${intent.intent_text}`));
     }
     const minutes = Math.min(Math.max(parseInt(extra ?? "60", 10) || 60, 5), 7 * 1440);
     const at = new Date(Date.now() + minutes * 60_000);
-    await supabase.from("pending_intents").update({ status: "pending", reminded_at: null, trigger_date: at.toISOString() }).eq("id", id);
+    const { data: changed, error } = await supabase.from("pending_intents").update({ status: "pending", reminded_at: null, trigger_type: "date", trigger_date: at.toISOString() }).eq("id", id).eq("user_id", link.user_id).is("deleted_at", null).in("status", ["pending", "reminded"]).select("id");
+    if (error || !changed?.length) return void (await answerCallbackQuery(cq.id, "Could not snooze that reminder. Open Vinx to check."));
     await answerCallbackQuery(cq.id, "Snoozed");
     const { data: profile } = await supabase.from("profiles").select("timezone").eq("id", link.user_id).maybeSingle();
     return void (await editMessageText(chatId, messageId, `Snoozed until ${whenText(at.toISOString(), profile?.timezone || "UTC")}: ${intent.intent_text}`));
