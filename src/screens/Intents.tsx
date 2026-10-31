@@ -1,5 +1,7 @@
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ReminderTiming } from '@/components/reminders/ReminderTiming';
+import { changeReminder, repeatLabel, type Reminder } from '@/lib/reminders';
 import { useNavigate } from "@/lib/router-compat";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +17,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { addHours, addDays, format, isAfter, nextMonday, setHours, setMinutes, startOfDay } from 'date-fns';
-import { Calendar, MapPin, MessageCircle, User, CheckCircle, Bell, Clock, AlarmClock } from 'lucide-react';
+import { Calendar, MapPin, MessageCircle, User, CheckCircle, Bell, Clock, AlarmClock, Repeat } from 'lucide-react';
 
 const triggerIcons: Record<string, typeof Calendar> = {
   date: Calendar,
@@ -47,6 +49,7 @@ export default function Intents() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [timing, setTiming] = useState<{ reminder: Reminder; mode: 'snooze' | 'schedule' } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,14 +57,16 @@ export default function Intents() {
     }
   }, [user, loading, navigate]);
 
-  const { data: intents, isLoading } = useQuery({
-    queryKey: ['all-intents'],
+  const { data: intents, isLoading, isError, refetch } = useQuery({
+    queryKey: ['all-intents', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pending_intents')
         .select('*')
+        .eq('user_id', user?.id ?? '')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(1000);
 
       if (error) throw error;
       return data;
@@ -77,11 +82,7 @@ export default function Intents() {
 
   const snoozeIntent = useMutation({
     mutationFn: async ({ id, date }: { id: string; date: Date }) => {
-      const { error } = await supabase
-        .from('pending_intents')
-        .update({ status: 'pending', reminded_at: null, trigger_date: date.toISOString() })
-        .eq('id', id);
-      if (error) throw error;
+      await changeReminder(id, 'snooze', date.toISOString());
       return date;
     },
     onSuccess: (date) => {
@@ -94,12 +95,7 @@ export default function Intents() {
 
   const resolveIntent = useMutation({
     mutationFn: async (intentId: string) => {
-      const { error } = await supabase
-        .from('pending_intents')
-        .update({ status: 'resolved', resolved_at: new Date().toISOString() })
-        .eq('id', intentId);
-
-      if (error) throw error;
+      await changeReminder(intentId, 'done');
     },
     onSuccess: () => {
       refreshAll();
@@ -130,13 +126,14 @@ export default function Intents() {
 
   return (
     <AppLayout>
+      {timing && <ReminderTiming reminder={timing.reminder} mode={timing.mode} onClose={() => setTiming(null)} onSaved={() => { refreshAll(); toast.success(timing.mode === 'snooze' ? 'Reminder snoozed' : 'Schedule saved'); }} />}
       <div className="p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
           <div>
             <PageHeader eyebrow="Reminders" title={<>What V is <span className="serif-accent">holding</span> for you</>} sub="Future actions V picked up from your memories." />
           </div>
 
-          {isLoading ? (
+          {isError ? <div role="alert" className="py-8"><p className="text-destructive">Could not load reminders.</p><Button variant="outline" onClick={() => refetch()}>Try again</Button></div> : isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-24 bg-muted/50 rounded-lg animate-pulse" />
@@ -169,11 +166,11 @@ export default function Intents() {
                       return (
                         <Card key={intent.id} className="bg-card/50 border-border/50 hover:border-accent/30 transition-colors">
                           <CardContent className="p-4">
-                            <div className="flex items-start gap-4">
+                            <div className="flex flex-wrap items-start gap-3">
                               <div className="p-2 rounded-lg bg-accent/10 flex-shrink-0">
                                 <Icon className="w-5 h-5 text-accent" />
                               </div>
-                              <div className="flex-1 min-w-0">
+                              <div className="flex-1 min-w-0 basis-48">
                                 <p className="text-foreground font-medium">{intent.intent_text}</p>
                                 <div className="flex flex-wrap items-center gap-2 mt-2">
                                   <Badge variant="outline" className={statusColors[intent.status]}>
@@ -188,11 +185,14 @@ export default function Intents() {
                                       {format(new Date(intent.trigger_date), 'MMM d, h:mm a')}
                                     </span>
                                   )}
+                                  {intent.repeat_frequency !== 'none' && <Badge variant="outline"><Repeat className="w-3 h-3 mr-1" />{repeatLabel(intent.repeat_frequency, intent.repeat_interval)}</Badge>}
                                 </div>
                               </div>
+                              <div className="flex flex-wrap gap-1 w-full justify-end">
+                              <Button variant="ghost" size="sm" disabled={snoozeIntent.isPending || resolveIntent.isPending} onClick={() => setTiming({ reminder: intent, mode: 'schedule' })}><Repeat className="w-4 h-4 mr-1" />Repeat</Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                                  <Button variant="ghost" size="sm" disabled={snoozeIntent.isPending || resolveIntent.isPending} className="text-muted-foreground">
                                     <AlarmClock className="w-4 h-4 mr-1" />
                                     Snooze
                                   </Button>
@@ -206,17 +206,20 @@ export default function Intents() {
                                       {o.label}
                                     </DropdownMenuItem>
                                   ))}
+                                  <DropdownMenuItem onClick={() => setTiming({ reminder: intent, mode: 'snooze' })}>Choose date & time…</DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                disabled={snoozeIntent.isPending || resolveIntent.isPending}
                                 onClick={() => resolveIntent.mutate(intent.id)}
                                 className="text-memory-processed hover:text-memory-processed hover:bg-memory-processed/10"
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" />
                                 Done
                               </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>

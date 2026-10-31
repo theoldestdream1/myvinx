@@ -398,10 +398,15 @@ export type Database = {
           deleted_at: string | null
           id: string
           intent_text: string
+          previous_occurrence_id: string | null
           priority: number | null
           raw_memory_id: string | null
           reminded_at: string | null
+          repeat_frequency: string
+          repeat_interval: number
+          repeat_timezone: string
           resolved_at: string | null
+          scheduled_for: string | null
           status: Database["public"]["Enums"]["intent_status"]
           structured_event_id: string | null
           trigger_date: string | null
@@ -414,10 +419,15 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           intent_text: string
+          previous_occurrence_id?: string | null
           priority?: number | null
           raw_memory_id?: string | null
           reminded_at?: string | null
+          repeat_frequency?: string
+          repeat_interval?: number
+          repeat_timezone?: string
           resolved_at?: string | null
+          scheduled_for?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
           structured_event_id?: string | null
           trigger_date?: string | null
@@ -430,10 +440,15 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           intent_text?: string
+          previous_occurrence_id?: string | null
           priority?: number | null
           raw_memory_id?: string | null
           reminded_at?: string | null
+          repeat_frequency?: string
+          repeat_interval?: number
+          repeat_timezone?: string
           resolved_at?: string | null
+          scheduled_for?: string | null
           status?: Database["public"]["Enums"]["intent_status"]
           structured_event_id?: string | null
           trigger_date?: string | null
@@ -775,6 +790,16 @@ export type Database = {
         }
       }
       memory_search_stats: { Args: { _user_id: string }; Returns: Json }
+      next_reminder_date: {
+        Args: {
+          _after: string
+          _anchor: string
+          _frequency: string
+          _interval: number
+          _timezone: string
+        }
+        Returns: string
+      }
       or_tsquery: { Args: { _text: string }; Returns: unknown }
       register_push_subscription: {
         Args: {
@@ -784,6 +809,43 @@ export type Database = {
           _user_agent?: string
         }
         Returns: string
+      }
+      reminder_action: {
+        Args: {
+          _action: string
+          _date?: string
+          _frequency?: string
+          _id: string
+          _interval?: number
+          _timezone?: string
+        }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          intent_text: string
+          previous_occurrence_id: string | null
+          priority: number | null
+          raw_memory_id: string | null
+          reminded_at: string | null
+          repeat_frequency: string
+          repeat_interval: number
+          repeat_timezone: string
+          resolved_at: string | null
+          scheduled_for: string | null
+          status: Database["public"]["Enums"]["intent_status"]
+          structured_event_id: string | null
+          trigger_date: string | null
+          trigger_type: string
+          trigger_value: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pending_intents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       resolve_inbound_address: {
         Args: { _alias: string }

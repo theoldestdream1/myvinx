@@ -17,25 +17,30 @@ serve(async (req) => {
     const supabase = adminClient();
 
     if (action === "done") {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("pending_intents")
         .update({ status: "resolved", resolved_at: new Date().toISOString() })
-        .eq("id", intentId);
+        .eq("id", intentId).is("deleted_at", null).in("status", ["pending", "reminded"]).select("id");
+      // The recurrence trigger advances only the first completion.
       if (error) throw error;
+      if (!data?.length) return json({ error: "Reminder is no longer active" }, 409);
       return json({ ok: true, action });
     }
 
     if (action === "snooze") {
       const mins = Math.min(Math.max(Number(minutes) || 60, 5), 24 * 60);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("pending_intents")
         .update({
           status: "pending",
           reminded_at: null,
+          trigger_type: "date",
           trigger_date: new Date(Date.now() + mins * 60_000).toISOString(),
         })
-        .eq("id", intentId);
+        .eq("id", intentId).is("deleted_at", null).in("status", ["pending", "reminded"])
+        .select("id");
       if (error) throw error;
+      if (!data?.length) return json({ error: "Reminder is no longer active" }, 409);
       return json({ ok: true, action, minutes: mins });
     }
 

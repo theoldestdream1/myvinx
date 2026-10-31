@@ -14,4 +14,5 @@
 - Screens keep react-router-style navigation through `src/lib/router-compat.tsx`, an adapter over TanStack Router; never install react-router-dom.
 - Memory lifecycle uses an owner-scoped atomic database RPC with timestamp conflict checks; inherited Trash visibility protects derived insights, vectors, and reminders, including background writes.
 - Permanent memory deletion queues attachment cleanup transactionally; owner-scoped retries run when Timeline opens so storage failures remain recoverable.
+- Reminder recurrence advances atomically in a database trigger on first completion; all delivery channels share it, retaining an original wall-clock anchor and occurrence history to avoid snooze drift and duplicate successors.
 - Backend logic stays in the existing Supabase edge functions under `supabase/functions/` (17 functions with their own auth); scheduled jobs authenticate with a vault-held secret checked by `verify_cron_secret`.
