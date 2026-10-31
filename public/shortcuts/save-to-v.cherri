@@ -1,0 +1,30 @@
+#define name Save to V
+#include 'actions/web'
+#include 'actions/text'
+#include 'actions/images'
+#include 'actions/media'
+#include 'actions/crypto'
+#define color lightblue
+#define mac false
+#define version 16.4
+#question captureKey "Paste your private capture key from Vinx Settings. Never share it." "YOUR_KEY"
+const key = text(captureKey)
+const endpoint = "https://lotrulidgneaeysgblok.supabase.co/functions/v1/capture"
+#define from sharesheet
+#define inputs image, text, url
+#define noinput stopwith "Share a photo, some text or a link to Save to V."
+const kind = typeOf(ShortcutInput)
+const result = if kind == "Image" {
+  const encoded = base64Encode(ShortcutInput)
+  jsonRequest(endpoint, "POST", {"image_base64": "{encoded}", "client": "ios-share"}, {"Authorization": "Bearer {key}"})
+} else {
+  const note = getText(ShortcutInput)
+  jsonRequest(endpoint, "POST", {"text": "{note}", "client": "ios-share"}, {"Authorization": "Bearer {key}"})
+}
+
+const id = "{result['id']}"
+if id {
+  showNotification("Saved to V", "Vinx")
+} else {
+  show("Not confirmed saved. Server response: {result}")
+}
