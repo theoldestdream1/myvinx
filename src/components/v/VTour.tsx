@@ -41,6 +41,6 @@ export function VTour() {
       <div className="min-w-0"><p className="text-xs text-muted-foreground mb-1">V’s tour · {step + 1} / {TOUR_STOPS.length}</p><h2 className="font-display text-2xl">{stop.title}</h2><p id="v-tour-description" className="mt-2 text-sm leading-relaxed">{stop.text}</p></div>
       <Button variant="ghost" size="icon" aria-label="Skip tour" title="Skip tour" onClick={close}><X /></Button>
     </div>
-    <div className="mt-3 flex justify-between gap-2"><Button variant="ghost" onClick={close}>Skip tour</Button><div className="flex gap-2">{step > 0 && <Button variant="outline" onClick={() => move(step - 1)} aria-label="Previous tour stop"><ArrowLeft /></Button>}<Button onClick={() => step === TOUR_STOPS.length - 1 ? close() : move(step + 1)}>{step === TOUR_STOPS.length - 1 ? 'Make yourself at home' : 'Next'}<ArrowRight /></Button></div></div>
+    <div className="mt-3 flex justify-between gap-2"><Button variant="ghost" onClick={close}>Skip tour</Button><div className="flex gap-2">{step > 0 && <Button variant="outline" onClick={() => move(step - 1)} aria-label="Previous tour stop"><ArrowLeft /></Button>}<Button onClick={() => step === TOUR_STOPS.length - 1 ? close() : move(step + 1)}>{step === TOUR_STOPS.length - 1 ? 'All settled' : 'Next'}<ArrowRight /></Button></div></div>
   </aside>;
 }
