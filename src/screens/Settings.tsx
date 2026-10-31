@@ -177,6 +177,7 @@ export default function Settings() {
               </div>
 
               <Group label={`On this ${deviceLabel.toLowerCase()}`}>
+                <Row icon={Sparkles} title="Plan & billing" hint="Free, Pro or Premium" to="/pricing" />
                 <Row icon={Bell} title="Notifications" hint="Reminder alerts and daily brief" onClick={() => setPanel('notifications')} />
                 {!installed && (
                   <Row icon={Download} title="Install Vinx" hint={device === 'desktop' ? 'Add to your dock or taskbar' : 'Add to your home screen'} onClick={() => setPanel('install')} />

@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CaptureRouteImport } from './routes/capture'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as GraphRouteImport } from './routes/graph'
 import { Route as IntentsRouteImport } from './routes/intents'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as QueryRouteImport } from './routes/query'
 import { Route as QuickRouteImport } from './routes/quick'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -37,6 +39,11 @@ const CaptureRoute = CaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -50,6 +57,11 @@ const GraphRoute = GraphRouteImport.update({
 const IntentsRoute = IntentsRouteImport.update({
   id: '/intents',
   path: '/intents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QueryRoute = QueryRouteImport.update({
@@ -87,9 +99,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/capture': typeof CaptureRoute
+  '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
   '/graph': typeof GraphRoute
   '/intents': typeof IntentsRoute
+  '/pricing': typeof PricingRoute
   '/query': typeof QueryRoute
   '/quick': typeof QuickRoute
   '/settings': typeof SettingsRoute
@@ -101,9 +115,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/capture': typeof CaptureRoute
+  '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
   '/graph': typeof GraphRoute
   '/intents': typeof IntentsRoute
+  '/pricing': typeof PricingRoute
   '/query': typeof QueryRoute
   '/quick': typeof QuickRoute
   '/settings': typeof SettingsRoute
@@ -116,9 +132,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/capture': typeof CaptureRoute
+  '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
   '/graph': typeof GraphRoute
   '/intents': typeof IntentsRoute
+  '/pricing': typeof PricingRoute
   '/query': typeof QueryRoute
   '/quick': typeof QuickRoute
   '/settings': typeof SettingsRoute
@@ -132,9 +150,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/capture'
+    | '/checkout'
     | '/dashboard'
     | '/graph'
     | '/intents'
+    | '/pricing'
     | '/query'
     | '/quick'
     | '/settings'
@@ -146,9 +166,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/capture'
+    | '/checkout'
     | '/dashboard'
     | '/graph'
     | '/intents'
+    | '/pricing'
     | '/query'
     | '/quick'
     | '/settings'
@@ -160,9 +182,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/capture'
+    | '/checkout'
     | '/dashboard'
     | '/graph'
     | '/intents'
+    | '/pricing'
     | '/query'
     | '/quick'
     | '/settings'
@@ -175,9 +199,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CaptureRoute: typeof CaptureRoute
+  CheckoutRoute: typeof CheckoutRoute
   DashboardRoute: typeof DashboardRoute
   GraphRoute: typeof GraphRoute
   IntentsRoute: typeof IntentsRoute
+  PricingRoute: typeof PricingRoute
   QueryRoute: typeof QueryRoute
   QuickRoute: typeof QuickRoute
   SettingsRoute: typeof SettingsRoute
@@ -209,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -228,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/intents'
       fullPath: '/intents'
       preLoaderRoute: typeof IntentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/query': {
@@ -279,9 +319,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CaptureRoute: CaptureRoute,
+  CheckoutRoute: CheckoutRoute,
   DashboardRoute: DashboardRoute,
   GraphRoute: GraphRoute,
   IntentsRoute: IntentsRoute,
+  PricingRoute: PricingRoute,
   QueryRoute: QueryRoute,
   QuickRoute: QuickRoute,
   SettingsRoute: SettingsRoute,
