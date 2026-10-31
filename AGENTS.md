@@ -16,3 +16,6 @@
 - Permanent memory deletion queues attachment cleanup transactionally; owner-scoped retries run when Timeline opens so storage failures remain recoverable.
 - Reminder recurrence advances atomically in a database trigger on first completion; all delivery channels share it, retaining an original wall-clock anchor and occurrence history to avoid snooze drift and duplicate successors.
 - Backend logic stays in the existing Supabase edge functions under `supabase/functions/` (17 functions with their own auth); scheduled jobs authenticate with a vault-held secret checked by `verify_cron_secret`.
+- Web push derives a stable P-256 signing pair from the encrypted app-only seed (or existing paired keys); only the public key is returned by the reminder configuration endpoint, avoiding frontend key drift.
+- The device service worker handles messaging and Android share transport only; it removes legacy Vinx shell caches without caching HTML or assets, preventing stale sessions and pages.
+- iOS shortcut downloads are explicitly unsigned creator templates with per-recipient import questions; installation buttons accept only genuine iCloud URLs, and success feedback requires a returned memory ID.

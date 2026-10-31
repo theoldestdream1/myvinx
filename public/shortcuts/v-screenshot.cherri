@@ -1,0 +1,23 @@
+#define name V Screenshot
+#include 'actions/web'
+#include 'actions/text'
+#include 'actions/images'
+#include 'actions/media'
+#include 'actions/crypto'
+#define color lightblue
+#define mac false
+#define version 16.4
+#question captureKey "Paste your private capture key from Vinx Settings. Never share it." "YOUR_KEY"
+const key = text(captureKey)
+const endpoint = "https://lotrulidgneaeysgblok.supabase.co/functions/v1/capture"
+const image = takeScreenshot()
+const encoded = base64Encode(image)
+const result = jsonRequest(endpoint, "POST", {"image_base64": "{encoded}", "mime": "image/png", "client": "ios-screenshot"}, {"Authorization": "Bearer {key}"})
+
+const response = getDictionary(result)
+const id = getValue(response, "id")
+if id {
+  showNotification("Saved to V", "Vinx")
+} else {
+  show("Not confirmed saved. Server response: {result}")
+}

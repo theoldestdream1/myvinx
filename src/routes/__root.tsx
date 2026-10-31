@@ -18,6 +18,7 @@ import { GlobalCapture } from "@/components/capture/GlobalCapture";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerDeviceWorker } from "@/lib/registerDeviceWorker";
 
 function NotFoundComponent() {
   return (
@@ -151,20 +152,10 @@ function RootComponent() {
   );
 }
 
-// Service worker: push notifications, share target, offline shell.
-// Skipped in dev and inside editor preview iframes so it never caches stale modules.
+// Device messaging and Android share transport, without an offline app shell.
 function ServiceWorkerRegistrar() {
   useEffect(() => {
-    let inIframe = true;
-    try {
-      inIframe = window.self !== window.top;
-    } catch {
-      inIframe = true;
-    }
-    const isPreviewHost = /(^|\.)lovableproject\.com$|^id-preview--/.test(window.location.hostname);
-    if ("serviceWorker" in navigator && import.meta.env.PROD && !inIframe && !isPreviewHost) {
-      navigator.serviceWorker.register("/sw.js").catch((e) => console.warn("SW registration failed", e));
-    }
+    void registerDeviceWorker().catch(() => console.warn("Device notifications unavailable"));
   }, []);
   return null;
 }

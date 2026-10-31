@@ -1,0 +1,23 @@
+#define name Tell V
+#include 'actions/web'
+#include 'actions/text'
+#include 'actions/images'
+#include 'actions/media'
+#define color lightblue
+#define mac false
+#define version 16.4
+#question captureKey "Paste your private capture key from Vinx Settings. Never share it." "YOUR_KEY"
+const key = text(captureKey)
+const endpoint = "https://lotrulidgneaeysgblok.supabase.co/functions/v1/capture"
+speak("What would you like me to remember?")
+const note = listen("After Pause")
+if !note { stop() }
+const result = jsonRequest(endpoint, "POST", {"text": "{note}", "client": "ios-siri"}, {"Authorization": "Bearer {key}"})
+
+const response = getDictionary(result)
+const id = getValue(response, "id")
+if id {
+  showNotification("Saved to V", "Vinx")
+} else {
+  show("Not confirmed saved. Server response: {result}")
+}

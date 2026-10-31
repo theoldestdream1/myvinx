@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "@/lib/router-compat";
-import { Check, Copy, KeyRound, Loader2, Mic, Camera, Share2, Smartphone, Terminal } from 'lucide-react';
+import { Check, Copy, KeyRound, Loader2, Mic, Camera, Share2, Smartphone, Terminal, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { functionErrorMessage } from '@/hooks/usePushNotifications';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const BASE = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'https://YOUR-PROJECT.supabase.co';
@@ -41,13 +42,31 @@ function Steps({ children }: { children: React.ReactNode }) {
 
 function KeyMaker({ value, onCreated }: { value: string | null; onCreated: (k: string) => void }) {
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const test = async () => {
+    if (!value) return;
+    setTesting(true);
+    try {
+      const response = await fetch(CAPTURE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${value}` }, body: '{}', signal: AbortSignal.timeout(10000) });
+      const result = await response.json();
+      if (response.status !== 400 || result.error !== 'Nothing to save. Send text, a url, an image or audio.') throw new Error('Could not verify your key. Create a new key or check your connection.');
+      setVerified(true);
+      toast.success('Your capture key is connected. No memory was created.');
+    } catch { toast.error('Could not verify your key. Check your connection and try again.'); }
+    finally { setTesting(false); }
+  };
   const isIphone = typeof navigator !== 'undefined' && /iPhone|iPad/.test(navigator.userAgent);
   const create = async () => {
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke('generate-device-token', { body: { name: isIphone ? 'iPhone shortcuts' : 'Quick capture' } });
-    setBusy(false);
-    if (error || !data?.token) { toast.error('Could not create a key. Try again.'); return; }
-    onCreated(data.token);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-device-token', { body: { name: isIphone ? 'iPhone shortcuts' : 'Quick capture' } });
+      if (error) throw error;
+      if (typeof data?.token !== 'string') throw new Error('No key returned');
+      setVerified(false);
+      onCreated(data.token);
+    } catch (error) { toast.error(await functionErrorMessage(error, 'Could not create a key. Try again.')); }
+    finally { setBusy(false); }
   };
   return (
     <Card className="bg-card/50 border-border/50">
@@ -59,6 +78,7 @@ function KeyMaker({ value, onCreated }: { value: string | null; onCreated: (k: s
         {value ? (
           <>
             <Copyable label="Your key (shown once)" value={value} secret />
+            <Button variant="outline" onClick={test} disabled={testing}>{testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}{verified ? "Connection verified — test again" : "Test my capture connection"}</Button>
             <Copyable label="Address to send to" value={CAPTURE_URL} />
           </>
         ) : (
@@ -73,7 +93,7 @@ function KeyMaker({ value, onCreated }: { value: string | null; onCreated: (k: s
 }
 
 function ShortcutLink({ href, label }: { href?: string; label: string }) {
-  if (!href) return null;
+  if (!href || !/^https:\/\/www\.icloud\.com\/shortcuts\/[a-z0-9]+$/i.test(href)) return <p className="text-sm text-muted-foreground">One-tap installer pending Apple signing. You can set this up in Shortcuts using the steps below.</p>;
   return <Button asChild size="sm" className="mb-2"><a href={href}>{label}</a></Button>;
 }
 
@@ -95,7 +115,7 @@ export default function SetupShortcuts() {
         <div className="max-w-3xl mx-auto space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Capture from anywhere</h1>
-            <p className="text-muted-foreground mt-1">Say it to your phone, double-tap the back of it, or share to V. Saving takes a moment because V only stores it first and does the thinking afterwards.</p>
+            <p className="text-muted-foreground mt-1">Say it to your phone, double-tap the back of it, or share to V. V saves first and does the thinking afterwards.</p>
           </div>
 
           <KeyMaker value={key} onCreated={setKey} />
@@ -108,8 +128,16 @@ export default function SetupShortcuts() {
             </TabsList>
 
             <TabsContent value="iphone" className="space-y-4">
+              <div className="space-y-3 border-b border-border pb-5">
+                <h2 className="text-base font-semibold">Creator templates</h2>
+                <p className="text-sm text-muted-foreground">These downloads need Apple signing on a Mac before iPhone installation. Until signed installers are available, use the steps below.</p>
+                <div className="flex flex-wrap gap-2">
+                  {['tell-v', 'v-screenshot', 'save-to-v'].map((slug, index) => <Button key={slug} variant="outline" size="sm" asChild><a href={`/shortcuts/${slug}-unsigned.shortcut`} download><Download className="w-4 h-4 mr-2" />{['Tell V', 'V Screenshot', 'Save to V'][index]}</a></Button>)}
+                  <Button variant="ghost" size="sm" asChild><a href="/shortcuts/README.txt" target="_blank" rel="noreferrer">Apple publishing steps</a></Button>
+                </div>
+              </div>
               <Card className="bg-card/50 border-border/50"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Mic className="w-4 h-4 text-primary" />"Hey Siri, Tell V"</CardTitle>
-                <CardDescription>Siri asks what to remember, you say it, it is saved. Works hands-free, from the lock screen and from AirPods.</CardDescription></CardHeader>
+                <CardDescription>Siri asks what to remember, you say it, it is saved. Siri may ask you to unlock your phone or approve microphone and network access the first time.</CardDescription></CardHeader>
                 <CardContent className="space-y-3">
                   <ShortcutLink href={LINKS.tell} label="Add “Tell V” to Shortcuts" />
                   <Steps>
@@ -118,8 +146,8 @@ export default function SetupShortcuts() {
                     <li>Add <b>Get Contents of URL</b>. Set the URL to the address above, <i>Method</i> to <b>POST</b>.</li>
                     <li>Under <i>Headers</i> add <code>Authorization</code> = <code>Bearer {k}</code>.</li>
                     <li>Set <i>Request Body</i> to <b>JSON</b> and add two Text fields: <code>text</code> = <b>Dictated Text</b>, and <code>client</code> = <code>ios-siri</code>.</li>
-                    <li>Add <b>Show Notification</b> with the text “Saved to V”.</li>
-                    <li>Say “Hey Siri, Tell V”, wait for the prompt, then say what to remember. Siri can't take the whole sentence in one breath, but it is two seconds end to end.</li>
+                    <li>Add <b>Get Dictionary Value</b> for <code>id</code> from the request result. Add <b>If</b> that value <b>has any value</b>: <b>Show Notification</b> “Saved to V”. Otherwise show the request result so a failure is never reported as saved.</li>
+                    <li>Say “Hey Siri, Tell V”, wait for the prompt, then say what to remember. Siri can't take the whole sentence in one breath, and saving speed depends on your connection.</li>
                   </Steps>
                 </CardContent></Card>
 
@@ -132,28 +160,29 @@ export default function SetupShortcuts() {
                     <li>Add <b>Take Screenshot</b>.</li>
                     <li>Add <b>Get Contents of URL</b> with the same URL, <b>POST</b> and the same <code>Authorization</code> header.</li>
                     <li>Set <i>Request Body</i> to <b>Form</b>, then add: a <b>File</b> field named <code>image</code> = <b>Screenshot</b>, and a Text field <code>client</code> = <code>ios-screenshot</code>.</li>
-                    <li>Add <b>Show Notification</b>: “Saved to V”.</li>
+                    <li>Read <code>id</code> from the request result with <b>Get Dictionary Value</b>. Only show “Saved to V” if it <b>has any value</b>; otherwise show the request result.</li>
                     <li><b>Back Tap:</b> Settings → Accessibility → Touch → Back Tap → Double Tap → scroll to Shortcuts → <b>V Screenshot</b>.</li>
-                    <li><b>Action Button</b> (iPhone 15 Pro and newer): Settings → Action Button → Shortcut → choose <b>Tell V</b> or <b>V Screenshot</b>.</li>
+                    <li><b>Action Button</b> (on supported iPhones): Settings → Action Button → Shortcut → choose <b>Tell V</b> or <b>V Screenshot</b>.</li>
                     <li>By voice: “Hey Siri, V Screenshot”.</li>
                   </Steps>
                 </CardContent></Card>
 
               <Card className="bg-card/50 border-border/50"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Share2 className="w-4 h-4 text-primary" />Save to V (share sheet)</CardTitle>
-                <CardDescription>Adds V to the Share menu of every app, so a message, link, photo or web page is one tap away. This is the iPhone's stand-in for “Share to Vinx”.</CardDescription></CardHeader>
+                <CardDescription>Adds V to the Share menu in apps that support sharing, so a message, link, photo or web page is one tap away. This is the iPhone's stand-in for “Share to Vinx”.</CardDescription></CardHeader>
                 <CardContent className="space-y-3">
                   <ShortcutLink href={LINKS.save} label="Add “Save to V” to Shortcuts" />
                   <Steps>
                     <li>New shortcut named <b>Save to V</b>. In its settings (ⓘ) turn on <b>Show in Share Sheet</b> and accept <b>Images, Text, URLs</b>.</li>
-                    <li>Add an <b>If</b> action: <i>Shortcut Input</i> <b>is</b> <b>Image</b> (use “Has Any Value” if you prefer).</li>
+                    <li>Add an <b>If</b> action: <i>Shortcut Input</i> <b>is</b> <b>Image</b> (do not use “Has Any Value”: links also have values).</li>
                     <li>Inside <i>If</i>: <b>Get Contents of URL</b> (POST, same header) with a <b>Form</b> body: <code>image</code> = <b>Shortcut Input</b> (File), <code>client</code> = <code>ios-share</code>.</li>
                     <li>Inside <i>Otherwise</i>: <b>Get Contents of URL</b> with a <b>JSON</b> body: <code>text</code> = <b>Shortcut Input</b>, <code>client</code> = <code>ios-share</code>.</li>
-                    <li>End If, then <b>Show Notification</b>: “Saved to V”.</li>
+                    <li>End If. Read <code>id</code> from the request result. Only notify “Saved to V” if it <b>has any value</b>; otherwise show the request result.</li>
+                    <li>Test a link, some text and a photo separately. Open Timeline after each save to confirm it arrived. Share one photo at a time.</li>
                   </Steps>
                 </CardContent></Card>
 
               <Card className="bg-card/50 border-border/50"><CardContent className="pt-6 space-y-2 text-sm text-muted-foreground">
-                <p><b className="text-foreground">Good to know.</b> iPhone web apps can't appear in the Share menu on their own, which is why these shortcuts exist. For reminders as notifications, add Vinx to your Home Screen first (Safari → Share → Add to Home Screen). iPhones in the EU don't support web push at all, so connect <b>Telegram</b> or add the <b>calendar feed</b> in Settings for reliable alerts.</p>
+                <p><b className="text-foreground">Good to know.</b> iPhone web apps can't appear in the Share menu on their own, which is why these shortcuts exist. For reminders as notifications, add Vinx to your Home Screen first (Safari → Share → Add to Home Screen). Push requires iOS 16.4 or newer and notification permission. If unavailable, connect <b>Telegram</b> or add the <b>calendar feed</b> in Settings for reliable alerts.</p>
               </CardContent></Card>
             </TabsContent>
 
@@ -162,7 +191,7 @@ export default function SetupShortcuts() {
                 <CardContent><Steps>
                   <li>In Chrome open Vinx, then menu (⋮) → <b>Install app</b>. Now <b>Vinx appears in the Share menu</b> of every app: share a screenshot, text or link and it saves in one tap with Undo.</li>
                   <li><b>Long-press the Vinx icon</b> for <b>Voice note</b> and <b>Quick note</b>. Drag either one onto your home screen for a one-tap button.</li>
-                  <li>Want a voice button anywhere? Open <code>/quick?mode=voice</code> in Chrome → ⋮ → <b>Add to Home screen</b>. It starts listening the moment it opens.</li>
+                  <li>Want a voice button anywhere? Open <code>/quick?mode=voice</code> in Chrome → ⋮ → <b>Add to Home screen</b>. Tap the microphone when it opens; some browsers require a tap before recording.</li>
                 </Steps></CardContent></Card>
               <Card className="bg-card/50 border-border/50"><CardHeader><CardTitle className="text-base">"Hey Google"</CardTitle>
                 <CardDescription>Being straight with you: Google doesn't currently let apps register their own “tell V…” phrase, and Assistant is moving to Gemini. These work today:</CardDescription></CardHeader>
