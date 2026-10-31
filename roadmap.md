@@ -1,5 +1,13 @@
 # Roadmap
 
+## App polish
+- [ ] Expose reminder activation, test alerts and preferences directly in Reminders.
+- [ ] Match mobile and desktop destinations, including Pricing.
+- [ ] Wire V visibility/captions and replay controls; reduce idle work during scrolling/typing.
+- [ ] Add dark/light/system appearance and crystal-aligned surfaces.
+- [ ] Add a skippable, replayable V-led new-user tour.
+- [ ] Run regression tests and public browser checks; signed-in/device checks require external authentication and real devices.
+
 ## Launch accessibility
 - [ ] Web push: stable signing configured and live public configuration verified; subscription, encryption, Done/Snooze and failure checks pass. Blocked on publishing frontend changes, signed-in registration and real-device delivery (external auth provides no session).
 - [ ] iPhone capture: three unsigned creator templates served, setup questions and request format inspected, connection-test button implemented. Blocked on Apple signing/iCloud links and iPhone execution; manual setup remains available.
