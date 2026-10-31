@@ -12,7 +12,7 @@
 				<key>CustomOutputName</key>
 				<string>key</string>
 				<key>UUID</key>
-				<string>0cdd953b-3a3e-4400-b9db-972599748d08</string>
+				<string>72d13955-3d7b-48b1-832a-801313721122</string>
 				<key>WFTextActionText</key>
 				<string></string>
 			</dict>
@@ -25,7 +25,7 @@
 				<key>CustomOutputName</key>
 				<string>endpoint</string>
 				<key>UUID</key>
-				<string>af35508d-8260-44f4-bcc8-8bfc579b445f</string>
+				<string>01eb9aca-68b3-4830-bb67-0c1781ab6cca</string>
 				<key>WFTextActionText</key>
 				<string>https://lotrulidgneaeysgblok.supabase.co/functions/v1/capture</string>
 			</dict>
@@ -47,7 +47,7 @@
 				<key>CustomOutputName</key>
 				<string>note</string>
 				<key>UUID</key>
-				<string>839f5cc4-6907-461c-9255-622ba3de1daa</string>
+				<string>f5771ff7-8636-437a-ac0d-3878928cc58c</string>
 				<key>WFDictateTextStopListening</key>
 				<string>After Pause</string>
 			</dict>
@@ -58,7 +58,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>954616d0-3e06-4de9-aef3-de672ee579cc</string>
+				<string>5326f29a-5b4b-4142-be47-8b74df061419</string>
 				<key>WFCondition</key>
 				<integer>101</integer>
 				<key>WFControlFlowMode</key>
@@ -74,7 +74,7 @@
 							<key>OutputName</key>
 							<string>note</string>
 							<key>OutputUUID</key>
-							<string>839f5cc4-6907-461c-9255-622ba3de1daa</string>
+							<string>f5771ff7-8636-437a-ac0d-3878928cc58c</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -98,9 +98,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>954616d0-3e06-4de9-aef3-de672ee579cc</string>
+				<string>5326f29a-5b4b-4142-be47-8b74df061419</string>
 				<key>UUID</key>
-				<string>aadd3cb4-0553-492c-a613-2069580d8722</string>
+				<string>9336a850-7c60-41db-8f59-6dcd01e52591</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -117,7 +117,7 @@
 				<key>CustomOutputName</key>
 				<string>result</string>
 				<key>UUID</key>
-				<string>d71c2980-8431-4a96-bda4-c8bb4ee3d5e2</string>
+				<string>1bf81d19-fd01-4797-b807-095ef9339f90</string>
 				<key>WFHTTPBodyType</key>
 				<string>JSON</string>
 				<key>WFHTTPHeaders</key>
@@ -148,7 +148,7 @@
 												<key>OutputName</key>
 												<string>key</string>
 												<key>OutputUUID</key>
-												<string>0cdd953b-3a3e-4400-b9db-972599748d08</string>
+												<string>72d13955-3d7b-48b1-832a-801313721122</string>
 												<key>Type</key>
 												<string>ActionOutput</string>
 											</dict>
@@ -179,6 +179,28 @@
 									<key>Value</key>
 									<dict>
 										<key>string</key>
+										<string>client</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>ios-siri</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+							</dict>
+							<dict>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
 										<string>text</string>
 									</dict>
 									<key>WFSerializationType</key>
@@ -195,35 +217,13 @@
 												<key>OutputName</key>
 												<string>note</string>
 												<key>OutputUUID</key>
-												<string>839f5cc4-6907-461c-9255-622ba3de1daa</string>
+												<string>f5771ff7-8636-437a-ac0d-3878928cc58c</string>
 												<key>Type</key>
 												<string>ActionOutput</string>
 											</dict>
 										</dict>
 										<key>string</key>
 										<string>￼</string>
-									</dict>
-									<key>WFSerializationType</key>
-									<string>WFTextTokenString</string>
-								</dict>
-							</dict>
-							<dict>
-								<key>WFKey</key>
-								<dict>
-									<key>Value</key>
-									<dict>
-										<key>string</key>
-										<string>client</string>
-									</dict>
-									<key>WFSerializationType</key>
-									<string>WFTextTokenString</string>
-								</dict>
-								<key>WFValue</key>
-								<dict>
-									<key>Value</key>
-									<dict>
-										<key>string</key>
-										<string>ios-siri</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>
@@ -245,7 +245,7 @@
 								<key>OutputName</key>
 								<string>endpoint</string>
 								<key>OutputUUID</key>
-								<string>af35508d-8260-44f4-bcc8-8bfc579b445f</string>
+								<string>01eb9aca-68b3-4830-bb67-0c1781ab6cca</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -260,43 +260,55 @@
 		</dict>
 		<dict>
 			<key>WFWorkflowActionIdentifier</key>
-			<string>is.workflow.actions.gettext</string>
+			<string>is.workflow.actions.detect.dictionary</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>CustomOutputName</key>
+				<string>response</string>
+				<key>UUID</key>
+				<string>853b357c-3ac7-435f-89d0-3b2bc122bac5</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>result</string>
+						<key>OutputUUID</key>
+						<string>1bf81d19-fd01-4797-b807-095ef9339f90</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>CustomOutputName</key>
 				<string>id</string>
 				<key>UUID</key>
-				<string>3989e613-9750-4e71-b1ef-c83e26529812</string>
-				<key>WFTextActionText</key>
+				<string>11a4d71b-fa2c-43e3-b5da-861cc7a2cb86</string>
+				<key>WFDictionaryKey</key>
+				<string>id</string>
+				<key>WFGetDictionaryValueType</key>
+				<string>Value</string>
+				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
 					<dict>
-						<key>attachmentsByRange</key>
-						<dict>
-							<key>{0, 1}</key>
-							<dict>
-								<key>Aggrandizements</key>
-								<array>
-									<dict>
-										<key>PropertyName</key>
-										<string>id</string>
-										<key>Type</key>
-										<string>WFPropertyVariableAggrandizement</string>
-									</dict>
-								</array>
-								<key>OutputName</key>
-								<string>result</string>
-								<key>OutputUUID</key>
-								<string>d71c2980-8431-4a96-bda4-c8bb4ee3d5e2</string>
-								<key>Type</key>
-								<string>ActionOutput</string>
-							</dict>
-						</dict>
-						<key>string</key>
-						<string>￼</string>
+						<key>OutputName</key>
+						<string>response</string>
+						<key>OutputUUID</key>
+						<string>853b357c-3ac7-435f-89d0-3b2bc122bac5</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
 					</dict>
 					<key>WFSerializationType</key>
-					<string>WFTextTokenString</string>
+					<string>WFTextTokenAttachment</string>
 				</dict>
 			</dict>
 		</dict>
@@ -306,7 +318,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>1f0456a6-8d54-41fc-b7b4-536965b11767</string>
+				<string>60be5316-bc0d-4fc1-a615-2c459d3681c6</string>
 				<key>WFCondition</key>
 				<integer>100</integer>
 				<key>WFControlFlowMode</key>
@@ -322,7 +334,7 @@
 							<key>OutputName</key>
 							<string>id</string>
 							<key>OutputUUID</key>
-							<string>3989e613-9750-4e71-b1ef-c83e26529812</string>
+							<string>11a4d71b-fa2c-43e3-b5da-861cc7a2cb86</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -349,7 +361,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>1f0456a6-8d54-41fc-b7b4-536965b11767</string>
+				<string>60be5316-bc0d-4fc1-a615-2c459d3681c6</string>
 				<key>WFControlFlowMode</key>
 				<integer>1</integer>
 			</dict>
@@ -370,7 +382,7 @@
 								<key>OutputName</key>
 								<string>result</string>
 								<key>OutputUUID</key>
-								<string>d71c2980-8431-4a96-bda4-c8bb4ee3d5e2</string>
+								<string>1bf81d19-fd01-4797-b807-095ef9339f90</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -393,9 +405,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>1f0456a6-8d54-41fc-b7b4-536965b11767</string>
+				<string>60be5316-bc0d-4fc1-a615-2c459d3681c6</string>
 				<key>UUID</key>
-				<string>fb6f1578-cc0e-4a1a-8c25-fef66d790496</string>
+				<string>de9233cf-457c-43b1-bdc4-3ca0d25f1fc6</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -430,25 +442,25 @@
 	<key>WFWorkflowInputContentItemClasses</key>
 	<array>
 		<string>WFContactContentItem</string>
-		<string>WFDateContentItem</string>
-		<string>WFAVAssetContentItem</string>
-		<string>WFSafariWebPageContentItem</string>
-		<string>WFNumberContentItem</string>
-		<string>WFDCMapsLinkContentItem</string>
-		<string>WFPhoneNumberContentItem</string>
-		<string>WFRichTextContentItem</string>
-		<string>WFURLContentItem</string>
-		<string>WFEmailAddressContentItem</string>
 		<string>WFFolderContentItem</string>
-		<string>WFLocationContentItem</string>
+		<string>WFDCMapsLinkContentItem</string>
+		<string>WFAVAssetContentItem</string>
 		<string>WFPDFContentItem</string>
+		<string>WFPhoneNumberContentItem</string>
+		<string>WFStringContentItem</string>
 		<string>WFDictionaryContentItem</string>
-		<string>WFAppStoreAppContentItem</string>
+		<string>WFArticleContentItem</string>
 		<string>WFGenericFileContentItem</string>
 		<string>WFImageContentItem</string>
+		<string>WFSafariWebPageContentItem</string>
+		<string>WFURLContentItem</string>
+		<string>WFAppStoreAppContentItem</string>
+		<string>WFRichTextContentItem</string>
+		<string>WFNumberContentItem</string>
+		<string>WFDateContentItem</string>
+		<string>WFEmailAddressContentItem</string>
 		<string>WFiTunesProductContentItem</string>
-		<string>WFStringContentItem</string>
-		<string>WFArticleContentItem</string>
+		<string>WFLocationContentItem</string>
 	</array>
 	<key>WFWorkflowMinimumClientVersion</key>
 	<integer>900</integer>

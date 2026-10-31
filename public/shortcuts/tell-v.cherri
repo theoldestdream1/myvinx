@@ -14,7 +14,8 @@ const note = listen("After Pause")
 if !note { stop() }
 const result = jsonRequest(endpoint, "POST", {"text": "{note}", "client": "ios-siri"}, {"Authorization": "Bearer {key}"})
 
-const id = "{result['id']}"
+const response = getDictionary(result)
+const id = getValue(response, "id")
 if id {
   showNotification("Saved to V", "Vinx")
 } else {

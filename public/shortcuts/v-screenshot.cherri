@@ -14,7 +14,8 @@ const image = takeScreenshot()
 const encoded = base64Encode(image)
 const result = jsonRequest(endpoint, "POST", {"image_base64": "{encoded}", "mime": "image/png", "client": "ios-screenshot"}, {"Authorization": "Bearer {key}"})
 
-const id = "{result['id']}"
+const response = getDictionary(result)
+const id = getValue(response, "id")
 if id {
   showNotification("Saved to V", "Vinx")
 } else {

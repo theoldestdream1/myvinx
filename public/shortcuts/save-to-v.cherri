@@ -22,7 +22,8 @@ const result = if kind == "Image" {
   jsonRequest(endpoint, "POST", {"text": "{note}", "client": "ios-share"}, {"Authorization": "Bearer {key}"})
 }
 
-const id = "{result['id']}"
+const response = getDictionary(result)
+const id = getValue(response, "id")
 if id {
   showNotification("Saved to V", "Vinx")
 } else {
