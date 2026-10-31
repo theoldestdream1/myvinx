@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { loadPrefs, subscribePrefs } from '@/lib/avatar/prefs';
 import vSit from "@/assets/v-sit.png";
 import vWave from "@/assets/v-wave.png";
 import vHappy from "@/assets/v-happy.png";
@@ -35,6 +36,10 @@ const pick = <T,>(a: T[], not?: T) => { let x = a[Math.floor(Math.random() * a.l
 
 /** V living on the landing page: breathes, roams, reacts to scroll and taps, grows when she talks. */
 export function RestingV() {
+  const [enabled, setEnabled] = useState(() => loadPrefs().enabled);
+  const reduced = useReducedMotion();
+  const lastScroll = useRef(0);
+  useEffect(() => subscribePrefs(p => setEnabled(p.enabled)), []);
   const [h, setH] = useState(restHeight());
   const [vw, setVw] = useState(innerWidth);
   const [vh, setVh] = useState(innerHeight);
@@ -66,12 +71,18 @@ export function RestingV() {
   }, []);
 
   useEffect(() => {
+    let frame = 0;
     const onScroll = () => {
+      lastScroll.current = Date.now();
+      if (frame || reduced || !enabled) return;
+      frame = requestAnimationFrame(() => {
+      frame = 0;
       const dy = scrollY - lastY.current;
       lastY.current = scrollY;
       setLean(Math.max(-12, Math.min(12, dy * 0.6)));
       clearTimeout(settle.current);
       settle.current = window.setTimeout(() => setLean(0), 180);
+      });
     };
     const onResize = () => { setH(restHeight()); setVw(innerWidth); setVh(innerHeight); };
     addEventListener("scroll", onScroll, { passive: true });
@@ -80,16 +91,17 @@ export function RestingV() {
     later(() => say({ text: "There you are. I saved you a seat.", pose: "wave" }), 1400);
     return () => {
       removeEventListener("scroll", onScroll); removeEventListener("resize", onResize);
-      clearTimeout(settle.current); timers.current.forEach(clearTimeout);
+      cancelAnimationFrame(frame); clearTimeout(settle.current); timers.current.forEach(clearTimeout);
     };
-  }, [say]);
+  }, [say, reduced, enabled]);
 
   // idle life loop: every 4–8s she does something
   useEffect(() => {
+    if (!enabled || reduced) return;
     let alive = true;
     const tick = () => {
       if (!alive) return;
-      if (!busy.current) {
+      if (!busy.current && !document.hidden && Date.now() - lastScroll.current > 1200 && !document.activeElement?.matches('input, textarea')) {
         const r = Math.random();
         if (r < 0.35 && Date.now() > stayHomeUntil.current) {
           setSpot((s) => {
@@ -112,8 +124,9 @@ export function RestingV() {
     };
     later(tick, 5000);
     return () => { alive = false; };
-  }, [say]);
+  }, [say, enabled, reduced]);
 
+  if (!enabled) return null;
   const talking = !!bubble;
   const scale = talking ? 1.45 : 1;
   const w = h * REST.aspect;
