@@ -1,5 +1,9 @@
 # Roadmap
 
+## Launch accessibility
+- [ ] Web push: configure stable signing keys, test subscription lifecycle and worker actions; physical-device delivery and signed-in registration must be verified
+- [ ] iPhone capture: prepare three shortcut templates and installation access; Apple-signed/iCloud installation requires an Apple device and real-device validation
+
 ## Milestone 3
 - [ ] Memory lifecycle: implemented edit notes/insights, Trash, restore, permanent deletion; automated checks run, real signed-in flow blocked by externally managed authentication
 - [ ] Recurring reminders and flexible snooze: built; 39 app tests pass plus rollback-only database checks for recurrence, custom intervals, month-end, DST, missed dates, snooze, duplicate completion, one-offs, and Trash; signed-in end-to-end and real notification delivery remain unverified because external authentication supplies no test session

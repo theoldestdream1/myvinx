@@ -6,12 +6,19 @@ import { signActionToken } from "../_shared/actionToken.ts";
 import { formatTime } from "../_shared/brief.ts";
 import { isGone, sendMessage, telegramConfigured } from "../_shared/telegram.ts";
 import { emailConfigured, sendEmail } from "../_shared/email.ts";
+import { vapidKeys } from "../_shared/vapid.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Only the application-server PUBLIC key is exposed; never return the seed or private scalar.
+  if (req.method === "GET") {
+    const keys = vapidKeys();
+    return json({ configured: !!keys, publicKey: keys?.publicKey ?? null });
+  }
+  if (req.method !== "POST") return json({ error: "Use POST" }, 405);
 
   const supabase = adminClient();
   const dropGone = async (ids: string[]) => {
