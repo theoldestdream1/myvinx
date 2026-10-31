@@ -127,6 +127,13 @@ export default function Query() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isQuerying, setIsQuerying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const askInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const focus = () => window.setTimeout(() => askInputRef.current?.focus(), 50);
+    focus();
+    window.addEventListener('vinx:focus-ask', focus);
+    return () => window.removeEventListener('vinx:focus-ask', focus);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -279,6 +286,7 @@ export default function Query() {
         <div className="p-6 border-t border-border">
           <form onSubmit={handleQuery} className="flex gap-3">
             <Input
+              ref={askInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. the guy who recommended that book on pricing..."
