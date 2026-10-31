@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Launch accessibility
-- [ ] Web push: configure stable signing keys, test subscription lifecycle and worker actions; physical-device delivery and signed-in registration must be verified
-- [ ] iPhone capture: prepare three shortcut templates and installation access; Apple-signed/iCloud installation requires an Apple device and real-device validation
+- [ ] Web push: stable signing configured and live public configuration verified; subscription, encryption, Done/Snooze and failure checks pass. Blocked on publishing frontend changes, signed-in registration and real-device delivery (external auth provides no session).
+- [ ] iPhone capture: three unsigned creator templates served, setup questions and request format inspected, connection-test button implemented. Blocked on Apple signing/iCloud links and iPhone execution; manual setup remains available.
 
 ## Milestone 3
 - [ ] Memory lifecycle: implemented edit notes/insights, Trash, restore, permanent deletion; automated checks run, real signed-in flow blocked by externally managed authentication
