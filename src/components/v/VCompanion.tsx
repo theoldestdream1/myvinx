@@ -46,8 +46,8 @@ export function VCompanion() {
   const [busy, setBusy] = useState(false); // app-level thinking (e.g. answering a query)
   const [hidden, setHidden] = useState(false);
   const [side, setSide] = useState<"right" | "left">("left");
-  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer" | "walk">(null);
-  const [spot, setSpot] = useState(0); // 0 = home seat (bottom left), 1 = right edge
+  const [act, setAct] = useState<null | "hop" | "look" | "poke" | "cheer" | "walk" | "wave" | "point" | "stretch">(null);
+  const [spot, setSpot] = useState(1); // 1 = home seat (bottom right), 0 = left edge
   const [walkMs, setWalkMs] = useState(2000);
   const [tp, setTp] = useState(false); // teleporting home
   const [menuLine, setMenuLine] = useState("");
@@ -192,20 +192,23 @@ export function VCompanion() {
           } else if (r < 0.5 && Date.now() > stayHomeUntil.current) {
             // stroll somewhere new at a steady walking pace, facing where she's going
             setSpot((s) => {
-              const n = s > 0.5 ? Math.random() * 0.35 : 0.65 + Math.random() * 0.35;
-              const ms = Math.max(1600, Math.min(6000, (Math.abs(n - s) * innerWidth / 60) * 1000));
+              const n = s > 0.5 ? Math.random() * 0.4 : 0.6 + Math.random() * 0.4;
+              const ms = Math.max(1800, Math.min(5000, (Math.abs(n - s) * innerWidth / 80) * 1000));
               setSide(n > s ? "right" : "left");
               setWalkMs(ms);
               setAct("walk"); window.setTimeout(() => setAct((a) => (a === "walk" ? null : a)), ms);
               return n;
             });
-          } else if (r < 0.65) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
-          else if (r < 0.8) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
-          else if (r < 0.9) { setRise(-30 - Math.random() * 60); window.setTimeout(() => setRise(0), 2600); }
+          } else if (r < 0.58) { setAct("wave"); setPose("wave"); window.setTimeout(() => { setAct(null); setPose((p) => (p === "wave" ? "sit" : p)); }, 1700); }
+          else if (r < 0.68) { setAct("point"); setPose("happy"); window.setTimeout(() => { setAct(null); setPose((p) => (p === "happy" ? "sit" : p)); }, 1500); }
+          else if (r < 0.76) { setAct("look"); window.setTimeout(() => setAct(null), 1600); }
+          else if (r < 0.83) { setAct("hop"); window.setTimeout(() => setAct(null), 700); }
+          else if (r < 0.89) { setAct("stretch"); setPose("think"); window.setTimeout(() => { setAct(null); setPose((p) => (p === "think" ? "sit" : p)); }, 1400); }
+          else if (r < 0.95) { setRise(-30 - Math.random() * 60); window.setTimeout(() => setRise(0), 2600); }
           else { setPose("smug"); window.setTimeout(() => setPose((p) => (p === "smug" ? "sit" : p)), 1800); }
         }
         loop();
-      }, 3500 + Math.random() * 4500);
+      }, 2800 + Math.random() * 3600);
     };
     loop();
     return () => clearTimeout(t);
@@ -238,7 +241,7 @@ export function VCompanion() {
     stayHomeUntil.current = Date.now() + 45000;
     setTp(true); setAct(null); setBubble(null); setPhase("rest"); setRise(0);
     window.setTimeout(() => {
-      setSpot(0); setSide("left"); setPose("sit");
+      setSpot(1); setSide("left"); setPose("sit");
       window.setTimeout(() => { setTp(false); const l = line("home", getPersonality()); say(l.text, l.mood); }, 60);
     }, 220);
   };
@@ -263,13 +266,13 @@ export function VCompanion() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {!focus && (spot > 0.08 || act === "walk") && !tp && (
+        {!focus && (spot < 0.92 || act === "walk") && !tp && (
           <motion.button
             key="home"
             type="button"
             onClick={goHome}
             initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="fixed left-3 z-50 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
+            className="fixed right-3 z-50 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
             style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom - 4}px)` }}
             aria-label="Tap to bring V back to her seat"
             data-testid="v-home"
@@ -284,7 +287,7 @@ export function VCompanion() {
         style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom}px)` }}
         initial={false}
         animate={{ x, y, opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
-        transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: "linear" }, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } }}
+        transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: [0.45, 0, 0.35, 1] }, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } }}
         data-testid="v-companion"
         data-phase={phase}
       >
@@ -336,17 +339,17 @@ export function VCompanion() {
           initial={false}
           animate={{
             width: w, height: h,
-            rotate: act === "walk" ? [lean - 5, lean + 5] : lean + (act === "look" ? -6 : 0),
-            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [0, -5, 0] : 0,
-            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? walkDir : 1,
-            scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "walk" ? [1, 0.97, 1] : 1,
+            rotate: act === "walk" ? lean + walkDir * 7 : act === "wave" ? [0, -7, 6, -5, 4, 0] : act === "point" ? -9 : lean + (act === "look" ? -6 : 0),
+            y: act === "hop" ? [0, -26, 0, -6, 0] : act === "cheer" ? [0, -34, 0] : act === "walk" ? [-10, -18, -10] : act === "stretch" ? [0, -8, 0] : act === "point" ? -6 : 0,
+            scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? walkDir : act === "point" ? -1 : 1,
+            scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "stretch" ? [1, 1.09, 0.97, 1] : 1,
           }}
           transition={{
             width: SPRING, height: SPRING,
-            rotate: act === "walk" ? { duration: 0.42, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { type: "spring", stiffness: 90, damping: 14 },
-            y: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: act === "cheer" ? 0.7 : 0.65, ease: "easeInOut" },
-            scaleX: { duration: act === "look" ? 1.5 : 0.3 },
-            scaleY: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.45 },
+            rotate: act === "wave" ? { duration: 1.5, ease: "easeInOut" } : { type: "spring", stiffness: 70, damping: 12 },
+            y: act === "walk" ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : act === "stretch" ? { duration: 1.3, ease: "easeInOut" } : { duration: act === "cheer" ? 0.7 : 0.65, ease: "easeInOut" },
+            scaleX: { duration: act === "look" ? 1.5 : 0.35, ease: "easeInOut" },
+            scaleY: { duration: act === "stretch" ? 1.3 : 0.45, ease: "easeInOut" },
           }}
           whileTap={{ scale: 0.92 }}
         >

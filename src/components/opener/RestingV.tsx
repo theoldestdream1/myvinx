@@ -38,16 +38,16 @@ export function RestingV() {
   const [h, setH] = useState(restHeight());
   const [vw, setVw] = useState(innerWidth);
   const [vh, setVh] = useState(innerHeight);
-  const [spot, setSpot] = useState(0); // 0 = home seat (bottom left) .. 1 right
+  const [spot, setSpot] = useState(1); // 1 = home seat (bottom right) .. 0 left
   const [walkMs, setWalkMs] = useState(2000);
   const [tp, setTp] = useState(false);
   const stayHomeUntil = useRef(0);
   const [rise, setRise] = useState(0);
   const [lean, setLean] = useState(0);
-  const [face, setFace] = useState(1);
+  const [face, setFace] = useState(-1);
   const [pose, setPose] = useState<Pose>("sit");
   const [bubble, setBubble] = useState<{ text: string; k: number } | null>(null);
-  const [act, setAct] = useState<null | "hop" | "look" | "walk" | "poke">(null);
+  const [act, setAct] = useState<null | "hop" | "look" | "walk" | "poke" | "wave" | "point" | "stretch">(null);
   const lastY = useRef(scrollY);
   const settle = useRef<number | undefined>(undefined);
   const timers = useRef<number[]>([]);
@@ -94,18 +94,21 @@ export function RestingV() {
         if (r < 0.35 && Date.now() > stayHomeUntil.current) {
           setSpot((s) => {
             const n = s > 0.5 ? Math.random() * 0.45 : 0.55 + Math.random() * 0.45;
-            const ms = Math.max(1600, Math.min(6000, (Math.abs(n - s) * innerWidth / 60) * 1000));
+            const ms = Math.max(1800, Math.min(5000, (Math.abs(n - s) * innerWidth / 80) * 1000));
             setWalkMs(ms); setFace(n > s ? 1 : -1); setAct("walk");
             later(() => setAct((a) => (a === "walk" ? null : a)), ms);
             return n;
           });
         } else if (r < 0.5) {
           setRise(Math.random() < 0.5 ? 0 : 40 + Math.random() * Math.min(160, innerHeight * 0.2));
-        } else if (r < 0.65) { setAct("hop"); later(() => setAct(null), 700); }
-        else if (r < 0.8) { setAct("look"); later(() => setAct(null), 1500); }
+        } else if (r < 0.58) { setAct("wave"); setPose("wave"); later(() => { setAct(null); setPose("sit"); }, 1700); }
+        else if (r < 0.66) { setAct("point"); setPose("happy"); later(() => { setAct(null); setPose("sit"); }, 1500); }
+        else if (r < 0.72) { setAct("stretch"); setPose("think"); later(() => { setAct(null); setPose("sit"); }, 1400); }
+        else if (r < 0.78) { setAct("hop"); later(() => setAct(null), 700); }
+        else if (r < 0.85) { setAct("look"); later(() => setAct(null), 1500); }
         else say(Math.random() < 0.6 ? vl("idle") : pick(QUIPS, lastLine.current as never));
       }
-      later(tick, 4000 + Math.random() * 4000);
+      later(tick, 2800 + Math.random() * 3600);
     };
     later(tick, 5000);
     return () => { alive = false; };
@@ -118,18 +121,18 @@ export function RestingV() {
   const goHome = () => {
     stayHomeUntil.current = Date.now() + 45000;
     setTp(true); setAct(null); setBubble(null); setRise(0);
-    later(() => { setSpot(0); setPose("sit"); later(() => { setTp(false); say(vl("home")); }, 60); }, 220);
+    later(() => { setSpot(1); setFace(-1); setPose("sit"); later(() => { setTp(false); say(vl("home")); }, 60); }, 220);
   };
 
   return (
     <>
     <AnimatePresence>
-      {(spot > 0.08 || act === "walk") && !tp && (
+      {(spot < 0.92 || act === "walk") && !tp && (
         <motion.button
           key="home" type="button" onClick={goHome}
           initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
           className="fixed z-40 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
-          style={{ left: REST.margin, bottom: REST.margin }}
+          style={{ right: REST.margin, bottom: REST.margin }}
           aria-label="Tap to bring V back to her seat" data-testid="v-home"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" aria-hidden />Tap to return
@@ -140,7 +143,7 @@ export function RestingV() {
       className="pointer-events-none fixed z-40"
       style={{ left: REST.margin, bottom: REST.margin, height: h, width: w }}
       animate={{ x, y: -rise - (talking ? 20 : 0), opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
-      transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: "linear" }, y: SPRING, opacity: { duration: 0.25 }, scale: SPRING } : { ...SPRING }}
+      transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: [0.45, 0, 0.35, 1] }, y: SPRING, opacity: { duration: 0.25 }, scale: SPRING } : { ...SPRING }}
       data-testid="resting-v"
     >
       <AnimatePresence>
@@ -170,17 +173,17 @@ export function RestingV() {
         className="pointer-events-auto relative h-full w-full origin-bottom"
         animate={{
           scale,
-          rotate: act === "walk" ? [lean - 5, lean + 5] : lean + (act === "look" ? -7 : 0),
-          y: act === "hop" ? [0, -24, 0, -5, 0] : act === "walk" ? [0, -5, 0] : 0,
-          scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? face : 1,
-          scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "walk" ? [1, 0.97, 1] : 1,
+          rotate: act === "walk" ? lean + face * 7 : act === "wave" ? [0, -7, 6, -5, 4, 0] : act === "point" ? -9 : lean + (act === "look" ? -7 : 0),
+          y: act === "hop" ? [0, -24, 0, -5, 0] : act === "walk" ? [-10, -18, -10] : act === "stretch" ? [0, -8, 0] : act === "point" ? -6 : 0,
+          scaleX: act === "look" ? [1, -1, -1, 1] : act === "poke" ? [1, 1.12, 0.95, 1] : act === "walk" ? face : act === "point" ? (spot > 0.5 ? -1 : 1) : 1,
+          scaleY: act === "poke" ? [1, 0.86, 1.06, 1] : act === "stretch" ? [1, 1.09, 0.97, 1] : 1,
         }}
         transition={{
           scale: { type: "spring", stiffness: 180, damping: 14 },
-          rotate: act === "walk" ? { duration: 0.42, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { type: "spring", stiffness: 140, damping: 12 },
-          y: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.65, ease: "easeInOut" },
-          scaleX: { duration: act === "look" ? 1.5 : 0.3 },
-          scaleY: act === "walk" ? { duration: 0.42, repeat: Infinity, ease: "easeInOut" } : { duration: 0.45 },
+          rotate: act === "wave" ? { duration: 1.5, ease: "easeInOut" } : { type: "spring", stiffness: 70, damping: 12 },
+          y: act === "walk" ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : act === "stretch" ? { duration: 1.3, ease: "easeInOut" } : { duration: 0.65, ease: "easeInOut" },
+          scaleX: { duration: act === "look" ? 1.5 : 0.35, ease: "easeInOut" },
+          scaleY: { duration: act === "stretch" ? 1.3 : 0.45, ease: "easeInOut" },
         }}
       >
         <div className="v-life v-life-on absolute inset-0">
