@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "@/lib/router-compat";
-import { Check, Copy, KeyRound, Loader2, Mic, Camera, Share2, Smartphone, Terminal } from 'lucide-react';
+import { Check, Copy, KeyRound, Loader2, Mic, Camera, Share2, Smartphone, Terminal, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -128,6 +128,14 @@ export default function SetupShortcuts() {
             </TabsList>
 
             <TabsContent value="iphone" className="space-y-4">
+              <div className="space-y-3 border-b border-border pb-5">
+                <h2 className="text-base font-semibold">Creator templates</h2>
+                <p className="text-sm text-muted-foreground">These downloads need Apple signing on a Mac before iPhone installation. Until signed installers are available, use the steps below.</p>
+                <div className="flex flex-wrap gap-2">
+                  {['tell-v', 'v-screenshot', 'save-to-v'].map((slug, index) => <Button key={slug} variant="outline" size="sm" asChild><a href={`/shortcuts/${slug}-unsigned.shortcut`} download><Download className="w-4 h-4 mr-2" />{['Tell V', 'V Screenshot', 'Save to V'][index]}</a></Button>)}
+                  <Button variant="ghost" size="sm" asChild><a href="/shortcuts/README.txt" target="_blank" rel="noreferrer">Apple publishing steps</a></Button>
+                </div>
+              </div>
               <Card className="bg-card/50 border-border/50"><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Mic className="w-4 h-4 text-primary" />"Hey Siri, Tell V"</CardTitle>
                 <CardDescription>Siri asks what to remember, you say it, it is saved. Siri may ask you to unlock your phone or approve microphone and network access the first time.</CardDescription></CardHeader>
                 <CardContent className="space-y-3">
