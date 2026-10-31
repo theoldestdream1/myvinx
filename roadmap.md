@@ -2,7 +2,7 @@
 
 ## Milestone 3
 - [ ] Memory lifecycle: implemented edit notes/insights, Trash, restore, permanent deletion; automated checks run, real signed-in flow blocked by externally managed authentication
-- [ ] Recurring reminders and flexible snooze: schedules and custom snooze implemented; verification underway, real signed-in and device delivery checks unavailable on external authentication
+- [ ] Recurring reminders and flexible snooze: built; 39 app tests pass plus rollback-only database checks for recurrence, custom intervals, month-end, DST, missed dates, snooze, duplicate completion, one-offs, and Trash; signed-in end-to-end and real notification delivery remain unverified because external authentication supplies no test session
 - [x] Link reading and summaries (built; awaiting signed-in live capture test)
 - [ ] Timeline filters and tag management
 - [ ] Decide location-trigger approach
