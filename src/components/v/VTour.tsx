@@ -31,6 +31,12 @@ export function VTour() {
     const timer = window.setTimeout(() => document.querySelector(stop.target)?.classList.add('tour-highlight'), 350);
     return () => { clearTimeout(timer); document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight')); };
   }, [step, location.pathname]);
+  useEffect(() => {
+    if (step === null || !user) return;
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { finishTour(user.id); setStep(null); } };
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [step, user]);
   if (step === null || !user) return null;
   const stop = TOUR_STOPS[step];
   const close = () => { finishTour(user.id); setStep(null); };
