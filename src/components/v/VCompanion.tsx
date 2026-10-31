@@ -140,7 +140,7 @@ export function VCompanion() {
   useEffect(() => {
     const unsub = subscribe((e: AvatarEvent) => {
       lastActivity.current = Date.now();
-      if (e.type === "say") { if (phaseRef.current === "rest" || phaseRef.current === "menu") { setPhase("rest"); say(e.text, e.mood); } }
+      if (e.type === "say") { if (phaseRef.current === "rest") say(e.text, e.mood); }
       else if (e.type === "emote") { setPose(poseFor(e.mood)); clearTimeout(poseTimer.current); poseTimer.current = window.setTimeout(() => setPose("sit"), e.ms ?? 1800); }
       else if (e.type === "state") { setBusy(e.state !== "idle"); if (e.state === "thinking") setPose("think"); else if (e.state === "listening") setPose("listen"); else setPose("sit"); }
       else if (e.type === "tell") void startTell();
@@ -245,7 +245,11 @@ export function VCompanion() {
       window.setTimeout(() => { setTp(false); const l = line("home", getPersonality()); say(l.text, l.mood); }, 60);
     }, 220);
   };
-  const go = (to: string) => { setPhase("rest"); navigate(to); };
+  const go = (to: string) => {
+    setPhase("rest");
+    if (window.location.pathname === to) { window.dispatchEvent(new Event("vinx:focus-ask")); window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); return; }
+    navigate(to);
+  };
   const toggleVoice = () => { const p = { ...loadPrefs(), voice: !voiceOn }; savePrefs(p); if (!p.voice) vHush(); };
 
   const status = phase === "prompting" ? "V is talking" : phase === "listening" ? "Listening · tap V to finish" : phase === "transcribing" ? "Catching every word…" : phase === "saving" ? "Saving…" : "";
