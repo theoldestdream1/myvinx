@@ -1,15 +1,13 @@
 /* Vinx service worker
  * - Web Push: reminders + daily brief, with Done / Snooze buttons that work from the lock screen
  * - Share target: receives "Share -> Vinx" from other apps (Android / desktop Chromium)
- * - Light offline shell so the installed app opens without a connection
+ * - No app-shell caching: pages and assets always use the network
  */
-const VERSION = 'v1';
-const SHELL_CACHE = `vinx-shell-${VERSION}`;
 const SHARE_CACHE = 'vinx-share-target'; // survives SW upgrades on purpose
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((c) => c.add('/')).catch(() => {}).then(() => self.skipWaiting()),
+    self.skipWaiting(),
   );
 });
 
@@ -19,7 +17,7 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k.startsWith('vinx-shell-') && k !== SHELL_CACHE).map((k) => caches.delete(k)),
+          keys.filter((k) => k.startsWith('vinx-shell-')).map((k) => caches.delete(k)),
         ),
       )
       .then(() => self.clients.claim()),
@@ -38,40 +36,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
-
-  // SPA navigations: network first, fall back to the cached shell when offline
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(SHELL_CACHE).then((c) => c.put('/', copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match('/').then((r) => r || Response.error())),
-    );
-    return;
-  }
-
-  // Hashed build assets never change: cache first
-  if (url.pathname.startsWith('/assets/')) {
-    event.respondWith(
-      caches.match(req).then(
-        (hit) =>
-          hit ||
-          fetch(req).then((res) => {
-            if (res.ok) {
-              const copy = res.clone();
-              caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
-            }
-            return res;
-          }),
-      ),
-    );
-  }
 });
 
 async function handleShare(request) {
@@ -182,6 +146,7 @@ async function runAction(d, action) {
 
 async function openApp(path) {
   const target = new URL(path, self.location.origin).href;
+  if (new URL(target).origin !== self.location.origin) return;
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   for (const c of clients) {
     if (new URL(c.url).origin === self.location.origin) {
