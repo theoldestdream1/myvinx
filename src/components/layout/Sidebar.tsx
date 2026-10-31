@@ -3,6 +3,8 @@ import { NavLink, useLocation } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { appNavigation } from '@/lib/appNavigation';
+import { ThemePicker } from './ThemeProvider';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -16,14 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: PlusCircle, label: 'Capture', path: '/capture' },
-  { icon: Clock, label: 'Timeline', path: '/timeline' },
-  { icon: Search, label: 'Query', path: '/query' },
-  { icon: Network, label: 'Graph', path: '/graph' },
-  { icon: Bell, label: 'Intents', path: '/intents' },
-];
+const navItems = appNavigation.filter(item => item.path !== '/settings');
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -60,10 +55,12 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              title={item.label}
+              aria-label={collapsed ? item.label : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
                 isActive
-                  ? 'bg-sidebar-accent text-sidebar-primary shadow-[inset_0_1px_0] shadow-white/5'
+                  ? 'bg-sidebar-accent text-sidebar-primary'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
               )}
             >
@@ -79,6 +76,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 space-y-1 border-t border-sidebar-border/60">
+        {!collapsed && <ThemePicker />}
         <NavLink
           to="/settings"
           className={cn(
@@ -90,7 +88,8 @@ export function Sidebar() {
           {!collapsed && <span className="font-medium">Settings</span>}
         </NavLink>
 
-        <button
+        <Button variant="ghost"
+          aria-label="Sign out"
           onClick={() => signOut()}
           className={cn(
             'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
@@ -99,7 +98,7 @@ export function Sidebar() {
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="font-medium">Sign Out</span>}
-        </button>
+        </Button>
 
         {/* User info */}
         {!collapsed && user && (
@@ -112,6 +111,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           size="sm"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={() => setCollapsed(!collapsed)}
           className="w-full justify-center text-muted-foreground hover:text-foreground"
         >

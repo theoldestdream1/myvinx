@@ -24,6 +24,9 @@ import { EmailCard } from '@/components/settings/EmailCard';
 import { CalendarCard } from '@/components/settings/CalendarCard';
 import { SearchHealthCard } from '@/components/settings/SearchHealthCard';
 import { DeviceKeys } from '@/components/settings/DeviceKeys';
+import { ThemePicker } from '@/components/layout/ThemeProvider';
+import { startTour } from '@/lib/v/tour';
+import { Button } from '@/components/ui/button';
 
 type Device = 'ios' | 'android' | 'desktop';
 function detectDevice(): Device {
@@ -60,7 +63,7 @@ function Row({ icon: Icon, title, hint, onClick, to, tone }: {
     </>
   );
   const cls = 'group press flex w-full items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-foreground/[0.03]';
-  return to ? <Link to={to} className={cls}>{inner}</Link> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+  return to ? <Link to={to} className={cls}>{inner}</Link> : <Button variant="ghost" type="button" onClick={onClick} className={`${cls} h-auto whitespace-normal rounded-none`}>{inner}</Button>;
 }
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
@@ -193,7 +196,10 @@ export default function Settings() {
                 <Row icon={CalendarDays} title="Calendar" hint="Reminders in your calendar app" onClick={() => setPanel('calendar')} />
               </Group>
 
+              <section className="space-y-3"><p className="eyebrow">Appearance</p><ThemePicker /></section>
+
               <Group label="More">
+                <Row icon={Sparkles} title="Take a tour with V" hint="Let her show you around" onClick={startTour} />
                 <Row icon={SlidersHorizontal} title="Advanced settings" hint="Search health, keys, export, account" onClick={() => setParams({ view: 'advanced' })} />
                 <Row icon={LogOut} title="Sign out" onClick={async () => { await signOut(); navigate('/auth'); }} />
               </Group>
@@ -244,7 +250,7 @@ export default function Settings() {
       <Sheet open={!!panel} onOpenChange={(o) => !o && setPanel(null)}>
         <SheetContent
           side={isMobile ? 'bottom' : 'right'}
-          className={`${isMobile ? 'max-h-[88vh] rounded-t-3xl' : 'w-full sm:max-w-lg'} overflow-y-auto border-border/50 bg-background/95 backdrop-blur-xl`}
+          className={`${isMobile ? 'max-h-[88vh] rounded-t-lg' : 'w-full sm:max-w-lg'} overflow-y-auto border-border/50 bg-background`}
         >
           {current && (
             <>

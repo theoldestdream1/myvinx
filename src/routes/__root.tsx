@@ -19,6 +19,8 @@ import { GlobalCapture } from "@/components/capture/GlobalCapture";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerDeviceWorker } from "@/lib/registerDeviceWorker";
+import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { VTour } from '@/components/v/VTour';
 
 function NotFoundComponent() {
   return (
@@ -136,7 +138,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <ThemeProvider><AuthProvider>
         <TooltipProvider>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
@@ -145,9 +147,10 @@ function RootComponent() {
             <OutboxFlusher />
             <GlobalCapture />
             <ServiceWorkerRegistrar />
+            <VTour />
           </ClientOnly>
         </TooltipProvider>
-      </AuthProvider>
+      </AuthProvider></ThemeProvider>
     </QueryClientProvider>
   );
 }

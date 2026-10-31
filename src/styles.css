@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Vinx design system: black, silver and light blue. Dark only.
+ * Vinx crystal design system: silver reflections and blue actions, dark and light.
  * All colours are oklch tokens; components use the semantic names.
  */
 
@@ -69,7 +69,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   --background: oklch(0.135 0.008 260);
   --foreground: oklch(0.939 0.005 250);
   --card: oklch(0.180 0.010 260);
@@ -143,13 +143,13 @@
 @utility glow-primary { box-shadow: none; }
 @utility shadow-card { box-shadow: var(--shadow-card); }
 @utility text-gradient { color: var(--foreground); }
-@utility glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+@utility glass { background: var(--sheen), var(--card); }
 
 /* ---------- Vinx editorial system (serif display, mono labels, aurora glows) ---------- */
 @utility eyebrow {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.22em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
@@ -208,7 +208,7 @@
 @utility chip {
   font-family: var(--font-mono);
   font-size: 0.625rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0;
   text-transform: uppercase;
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
@@ -229,7 +229,7 @@
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  h1, h2, h3, h4, h5, h6 { letter-spacing: -0.01em; }
+  h1, h2, h3, h4, h5, h6 { letter-spacing: 0; }
   button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
 }
 
@@ -316,3 +316,68 @@
   background: radial-gradient(circle at 35% 30%, oklch(0.98 0.005 250 / .35), transparent 55%), linear-gradient(160deg, oklch(0.45 0.02 250), oklch(0.22 0.02 250));
   border: 1px solid oklch(0.92 0.01 250 / .5);
   box-shadow: inset 0 1px 0 oklch(1 0 0 / .35), 0 0 0 8px oklch(0.92 0.01 250 / .06), 0 0 36px oklch(0.92 0.01 250 / .25), 0 12px 30px oklch(0 0 0 / .4); }
+
+.light {
+  --background: oklch(0.972 0.003 250);
+  --foreground: oklch(0.22 0.012 250);
+  --card: oklch(0.995 0.002 250);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.49 0.17 250);
+  --primary-foreground: oklch(0.995 0 0);
+  --secondary: oklch(0.91 0.009 250);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.925 0.006 250);
+  --muted-foreground: oklch(0.46 0.015 250);
+  --accent: oklch(0.90 0.025 250);
+  --accent-foreground: var(--foreground);
+  --border: oklch(0.82 0.009 250);
+  --input: var(--border);
+  --ring: var(--primary);
+  --silver: oklch(0.49 0.016 250);
+  --silver-deep: oklch(0.39 0.012 250);
+  --sidebar: oklch(0.948 0.005 250);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary);
+  --surface-1: oklch(0.96 0.005 250);
+  --surface-2: oklch(0.992 0.002 250);
+  --surface-3: oklch(1 0 0);
+  --rim: oklch(1 0 0 / 0.8);
+  --rim-strong: oklch(1 0 0);
+  --shadow-card: 0 6px 24px oklch(0.25 0.01 250 / 0.10);
+  --elev-1: inset 0 1px 0 var(--rim), 0 4px 16px oklch(0.25 0.01 250 / 0.06);
+  --elev-2: inset 0 1px 0 var(--rim), 0 8px 24px oklch(0.25 0.01 250 / 0.10);
+  --elev-lit: inset 0 1px 0 var(--rim-strong), 0 0 0 1px var(--border), 0 8px 24px oklch(0.25 0.01 250 / 0.08);
+  --sheen: linear-gradient(145deg, oklch(1 0 0 / .8), transparent 55%);
+  --memory-pending: oklch(0.48 0.09 85);
+  --memory-processing: var(--primary);
+  --memory-processed: oklch(0.42 0.01 250);
+  --memory-failed: oklch(0.49 0.19 27);
+}
+.device-nav { padding-bottom: env(safe-area-inset-bottom); box-shadow: var(--elev-1); }
+.mobile-content { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+.tour-guide { max-height: calc(100dvh - 150px); overflow-y: auto; }
+.tour-highlight { outline: 2px solid var(--primary); outline-offset: 5px; }
+/* Crystal facets: stationary reflections, not stacked live backdrop filters. */
+.surface, .card-ghost, .card-lit {
+  background-image: linear-gradient(140deg, color-mix(in oklab, var(--silver) 9%, transparent), transparent 26%), var(--sheen), linear-gradient(165deg, var(--surface-2), var(--surface-1));
+  border-color: color-mix(in oklab, var(--silver) 22%, var(--border));
+}
+input, textarea { caret-color: var(--primary); }
+input:focus-visible, textarea:focus-visible { border-color: var(--primary); }
+@media (max-width: 767px) {
+  .beam::after { animation: none; opacity: .5; }
+  .rise > * { animation-duration: .2s; animation-delay: 0s; }
+  .v-glint { display: none; }
+  .card-ghost, .card-lit, .surface { transition: border-color .15s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-life-on, .v-life-on > img, .v-talk, .v-glint, .v-rest-bob { animation: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}

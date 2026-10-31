@@ -19,8 +19,9 @@ export function NotificationCard() {
   const queryClient = useQueryClient();
   const push = usePushNotifications();
   const [testing, setTesting] = useState(false);
+  const [testStatus, setTestStatus] = useState('');
 
-  const { data: prefs } = useQuery({
+  const { data: prefs, isError, refetch } = useQuery({
     queryKey: ['notification-prefs', user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -45,13 +46,15 @@ export function NotificationCard() {
 
   const sendTest = async () => {
     setTesting(true);
+    setTestStatus('Sending test notification…');
     try {
       const { data, error } = await supabase.functions.invoke('send-reminders', { body: { test: true } });
       if (error) throw error;
-      if (!data?.sent) toast.error('The push service rejected the test. Try turning notifications off and on again.');
-      else toast.success('Test sent. It should arrive in a few seconds.');
+      if (!data?.sent) { setTestStatus('Test was not delivered. Turn notifications off and on, then retry.'); toast.error('The push service rejected the test. Try turning notifications off and on again.'); }
+      else { setTestStatus('Test sent. Check this device for the notification.'); toast.success('Test sent. It should arrive in a few seconds.'); }
     } catch (e) {
-      toast.error(await functionErrorMessage(e, 'Could not send a test notification'));
+      const message = await functionErrorMessage(e, 'Could not send a test notification');
+      setTestStatus(message); toast.error(message);
     } finally {
       setTesting(false);
     }
@@ -64,12 +67,6 @@ export function NotificationCard() {
     deviceControl = (
       <p className="text-sm text-muted-foreground">
         This browser doesn't support push notifications. Try Chrome, Edge, Firefox, or Safari (iPhone: add Vinx to your Home Screen first).
-      </p>
-    );
-  } else if (push.needsInstall) {
-    deviceControl = (
-      <p className="text-sm text-muted-foreground">
-        On iPhone, notifications only work once Vinx is on your Home Screen. Tap Share, then "Add to Home Screen", open it from there, and come back to this page.
       </p>
     );
   } else if (push.configLoading) {
@@ -91,7 +88,7 @@ export function NotificationCard() {
   } else if (push.subscribed) {
     deviceControl = (
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" onClick={sendTest} disabled={testing}>
+        <Button variant="outline" onClick={sendTest} disabled={testing || push.busy} aria-busy={testing}>
           {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BellRing className="w-4 h-4 mr-2" />}
           Send test notification
         </Button>
@@ -122,6 +119,8 @@ export function NotificationCard() {
       </CardHeader>
       <CardContent className="space-y-5">
         {deviceControl}
+        {testStatus && <p role="status" className="text-sm text-muted-foreground">{testStatus}</p>}
+        {isError && <div role="alert"><p className="text-sm text-destructive">Could not load notification preferences.</p><Button variant="outline" onClick={() => refetch()}>Retry preferences</Button></div>}
 
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -130,7 +129,7 @@ export function NotificationCard() {
           </div>
           <Switch
             id="reminders"
-            disabled={!canConfigure}
+            disabled={!canConfigure || updatePrefs.isPending}
             checked={prefs?.reminders_enabled ?? true}
             onCheckedChange={(v) => updatePrefs.mutate({ reminders_enabled: v })}
           />
@@ -143,7 +142,7 @@ export function NotificationCard() {
           </div>
           <Switch
             id="brief"
-            disabled={!canConfigure}
+            disabled={!canConfigure || updatePrefs.isPending}
             checked={prefs?.daily_brief_enabled ?? true}
             onCheckedChange={(v) => updatePrefs.mutate({ daily_brief_enabled: v })}
           />
@@ -153,7 +152,7 @@ export function NotificationCard() {
           <div className="flex items-center justify-between gap-4">
             <Label>Send it around</Label>
             <Select
-              disabled={!canConfigure}
+              disabled={!canConfigure || updatePrefs.isPending}
               value={String(prefs?.brief_hour ?? 8)}
               onValueChange={(v) => updatePrefs.mutate({ brief_hour: Number(v) })}
             >
@@ -170,7 +169,7 @@ export function NotificationCard() {
             </Select>
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Times use your local timezone.</p>
+        <p className="text-xs text-muted-foreground">Times use your local timezone. Notification sounds follow your device’s sound and Focus settings.</p>
       </CardContent>
     </Card>
   );

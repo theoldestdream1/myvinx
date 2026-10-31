@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Reminder } from '@/lib/reminders';
 const state = vi.hoisted(() => ({ rows: [] as Reminder[], rpc: vi.fn(), failRead: false }));
+vi.mock('@/components/settings/NotificationCard', () => ({ NotificationCard: () => <div /> }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'owner' }, loading: false }) }));
 vi.mock('@/lib/router-compat', () => ({ useNavigate: () => vi.fn() }));
 vi.mock('@/components/layout/AppLayout', () => ({ AppLayout: ({ children }: { children: React.ReactNode }) => <>{children}</> }));

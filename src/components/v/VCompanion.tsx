@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@/lib/router-compat";
 import { subscribe, type AvatarEvent, type Mood } from "@/lib/avatar/bus";
 import { loadPrefs, savePrefs, subscribePrefs } from "@/lib/avatar/prefs";
@@ -56,6 +56,8 @@ export function VCompanion() {
   const [lean, setLean] = useState(0);
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? innerWidth : 400));
   const [voiceOn, setVoiceOn] = useState(() => loadPrefs().voice);
+  const [enabled, setEnabled] = useState(() => loadPrefs().enabled);
+  const [captions, setCaptions] = useState(() => loadPrefs().captions);
   const [personality, setP] = useState<Personality>(() => getPersonality());
   const level = useMotionValue(0);
   const levelSmooth = useSpring(level, { stiffness: 300, damping: 25 });
@@ -69,8 +71,7 @@ export function VCompanion() {
   const lastActivity = useRef(Date.now());
   const lastQuip = useRef(Date.now());
   const phaseRef = useRef(phase); phaseRef.current = phase;
-  // V is the product: her idle life stays on even when the phone asks for fewer animations.
-  const reduced = false;
+  const reduced = useReducedMotion();
 
   const say = useCallback((text: string, mood?: Mood, opts: { quote?: boolean; hold?: number } = {}) => {
     setBubble({ text, key: Date.now(), quote: opts.quote });
@@ -143,47 +144,54 @@ export function VCompanion() {
       if (e.type === "say") { if (phaseRef.current === "rest") say(e.text, e.mood); }
       else if (e.type === "emote") { setPose(poseFor(e.mood)); clearTimeout(poseTimer.current); poseTimer.current = window.setTimeout(() => setPose("sit"), e.ms ?? 1800); }
       else if (e.type === "state") { setBusy(e.state !== "idle"); if (e.state === "thinking") setPose("think"); else if (e.state === "listening") setPose("listen"); else setPose("sit"); }
-      else if (e.type === "tell") void startTell();
+      else if (e.type === "tell" && enabled) void startTell();
       else if (e.type === "hide") setHidden(true);
       else if (e.type === "show") setHidden(false);
     });
     return () => { unsub(); clearTimeout(bubbleTimer.current); clearTimeout(poseTimer.current); };
-  }, [say, startTell]);
+  }, [say, startTell, enabled]);
 
-  useEffect(() => subscribePrefs((p) => setVoiceOn(p.voice)), []);
+  useEffect(() => subscribePrefs((p) => { setVoiceOn(p.voice); setEnabled(p.enabled); setCaptions(p.captions); if (!p.enabled) { vHush(); cancelTell(); } }), [cancelTell]);
   useEffect(() => {
     const h = (e: Event) => setP((e as CustomEvent<Personality>).detail);
     addEventListener(PERSONALITY_EVENT, h);
     return () => removeEventListener(PERSONALITY_EVENT, h);
   }, []);
   useEffect(() => {
-    const r = () => setVw(innerWidth);
+    let frame = 0;
+    const r = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; setVw(innerWidth); }); };
     addEventListener("resize", r);
-    return () => removeEventListener("resize", r);
+    return () => { removeEventListener("resize", r); cancelAnimationFrame(frame); };
   }, []);
 
   // ---------- scroll: she leans into it ----------
   useEffect(() => {
     lastY.current = scrollY;
+    let frame = 0;
     const onScroll = () => {
       lastActivity.current = Date.now();
+      if (frame || reduced || !enabled) return;
+      frame = requestAnimationFrame(() => {
+      frame = 0;
       const dy = scrollY - lastY.current;
       lastY.current = scrollY;
       setLean(Math.max(-10, Math.min(10, dy * 0.6)));
       clearTimeout(settle.current);
       settle.current = window.setTimeout(() => setLean(0), 180);
+      });
     };
     addEventListener("scroll", onScroll, { passive: true });
-    return () => { removeEventListener("scroll", onScroll); clearTimeout(settle.current); };
-  }, []);
+    return () => { removeEventListener("scroll", onScroll); cancelAnimationFrame(frame); clearTimeout(settle.current); };
+  }, [reduced, enabled]);
 
   // ---------- idle life: drifts around, hops, looks around, the odd remark ----------
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !enabled || hidden) return;
     let t: number;
     const loop = () => {
       t = window.setTimeout(() => {
-        if (phaseRef.current === "rest" && !document.hidden) {
+        const typing = document.activeElement?.matches('input, textarea, [contenteditable="true"]');
+        if (phaseRef.current === "rest" && !document.hidden && !typing && Date.now() - lastActivity.current > 1200) {
           const r = Math.random();
           const quietFor = Date.now() - lastActivity.current;
           if (quietFor > 25000 && Date.now() - lastQuip.current > 90000) {
@@ -212,9 +220,9 @@ export function VCompanion() {
     };
     loop();
     return () => clearTimeout(t);
-  }, [reduced, say]);
+  }, [reduced, say, enabled, hidden]);
 
-  if (hidden) return null;
+  if (hidden || !enabled) return null;
 
   const focus = phase !== "rest" && phase !== "menu";
   const base = isMobile ? 88 : 116;
@@ -297,14 +305,14 @@ export function VCompanion() {
       >
         {/* speech bubble / menu */}
         <AnimatePresence mode="popLayout">
-          {(bubble || phase === "menu") && (
+          {((bubble && (captions || !voiceOn || focus || bubble.quote)) || phase === "menu") && (
             <motion.div
               key={bubble?.key ?? "menu"}
               initial={{ opacity: 0, scale: 0.8, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 4 }}
               transition={{ type: "spring", stiffness: 380, damping: 26 }}
-              className="pointer-events-auto absolute bottom-full mb-2 w-[min(260px,80vw)] rounded-2xl border border-border/70 bg-card/95 px-3.5 py-2.5 text-sm leading-snug text-foreground shadow-xl backdrop-blur-md"
+              className="pointer-events-auto absolute bottom-full mb-2 w-[min(260px,80vw)] rounded-lg border border-border/70 bg-card px-3.5 py-2.5 text-sm leading-snug text-foreground shadow-card"
               style={{
                 ...(bubbleAlign === "right" ? { right: 0 } : bubbleAlign === "left" ? { left: 0 } : { left: "50%", translateX: "-50%" }),
                 transformOrigin: bubbleAlign === "right" ? "bottom right" : bubbleAlign === "left" ? "bottom left" : "bottom center",

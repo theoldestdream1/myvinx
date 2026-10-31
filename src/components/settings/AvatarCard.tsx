@@ -8,6 +8,7 @@ import { PERSONALITIES, getPersonality, setPersonality, type Personality } from 
 import { vSpeak } from '@/lib/v/voice';
 import { line } from '@/lib/v/personality';
 import { loadPrefs, savePrefs, subscribePrefs, type AvatarPrefs } from '@/lib/avatar/prefs';
+import { startTour } from '@/lib/v/tour';
 
 export function AvatarCard() {
   const [prefs, setPrefs] = useState<AvatarPrefs>(() => loadPrefs());
@@ -57,8 +58,8 @@ export function AvatarCard() {
           <Label htmlFor="v-captions">Show captions while V speaks</Label>
           <Switch id="v-captions" disabled={!prefs.voice} checked={prefs.captions || !prefs.voice} onCheckedChange={(v) => update({ captions: v })} />
         </div>
-        <Button variant="outline" size="sm" onClick={() => update({ introSeen: false, enabled: true, minimized: false })}>
-          Replay the introduction on next visit
+        <Button variant="outline" size="sm" onClick={startTour}>
+          Take a tour with V
         </Button>
       </CardContent>
     </Card>
