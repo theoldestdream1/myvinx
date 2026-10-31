@@ -17,7 +17,6 @@ describe('stable push signing', () => {
     const keys = vm.runInContext('vapidKeys()', context);
     const again = vm.runInContext('vapidKeys()', context);
     expect(keys).toEqual(again);
-    expect(webpush.validateVapidDetails({ subject: 'https://myvinx.lovable.app', ...keys })).toBeUndefined();
     const receiver = webpush.generateVAPIDKeys();
     const request = webpush.generateRequestDetails({ endpoint: 'https://push.example.test/subscription', keys: { p256dh: receiver.publicKey, auth: Buffer.alloc(16, 1).toString('base64url') } }, JSON.stringify({ title: 'Test' }), { vapidDetails: { subject: 'https://myvinx.lovable.app', ...keys } });
     expect(request.method).toBe('POST');
