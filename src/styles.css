@@ -362,8 +362,8 @@
 }
 .device-nav { padding-bottom: env(safe-area-inset-bottom); box-shadow: var(--elev-1); }
 .mobile-content { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
-.tour-guide { max-height: calc(100dvh - 150px); overflow-y: auto; }
-.tour-highlight { outline: 2px solid var(--primary); outline-offset: 5px; }
+.tour-guide { max-height: 38dvh; overflow-y: auto; }
+.tour-highlight { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: .5rem; box-shadow: 0 0 0 6px color-mix(in oklab, var(--silver) 25%, transparent); position: relative; z-index: 55; scroll-margin: 40dvh 0; }
 /* Crystal facets: stationary reflections, not stacked live backdrop filters. */
 .surface, .card-ghost, .card-lit {
   background-image: linear-gradient(140deg, color-mix(in oklab, var(--silver) 9%, transparent), transparent 26%), var(--sheen), linear-gradient(165deg, var(--surface-2), var(--surface-1));
