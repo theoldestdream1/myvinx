@@ -8,6 +8,7 @@ vi.mock('@/lib/router-compat', () => ({ useNavigate: () => vi.fn() }));
 vi.mock('@/components/layout/AppLayout', () => ({ AppLayout: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: state.rpc, from: () => { const q = { select: () => q, eq: () => q, is: () => q, order: () => q, limit: async () => ({ data: state.rows.map(r => ({ ...r })), error: state.failRead ? new Error('Offline') : null }) }; return q; } } }));
 import Intents from './Intents';
+HTMLElement.prototype.scrollIntoView = vi.fn();
 describe('reminder interactions', () => {
   beforeEach(() => {
     state.failRead = false;
@@ -38,7 +39,7 @@ describe('reminder interactions', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
   it('custom snooze changes the due date without completing or spawning a reminder', async () => {
-    mount(); fireEvent.pointerDown(await screen.findByRole('button', { name: 'Snooze' }), { button: 0, ctrlKey: false });
+    mount(); fireEvent.keyDown(await screen.findByRole('button', { name: 'Snooze' }), { key: 'Enter' });
     fireEvent.click(await screen.findByText('Choose date & time…'));
     fireEvent.change(screen.getByLabelText('Until'), { target: { value: '2099-02-03T10:30' } });
     fireEvent.click(screen.getByRole('button', { name: 'Snooze' }));
