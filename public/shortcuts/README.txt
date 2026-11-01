@@ -32,4 +32,4 @@ Allow network access on first run. Offline/network failures stop the shortcut;
 rejected or skipped saves show the response instead of a success banner.
 Actual speed and notification visibility require iPhone testing, and can be
 affected by network conditions, Focus mode and notification permissions.
-Rebuild this unsigned template using scripts/generate-link-shortcut.py.
+Rebuild this unsigned template using scripts/generate_link_shortcut.py.
