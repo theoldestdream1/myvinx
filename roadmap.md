@@ -1,5 +1,11 @@
 # Roadmap
 
+## Shared video understanding
+- [ ] Route TikTok, YouTube/Shorts and Instagram/Reels through public metadata and available caption extractors; preserve immediate saving.
+- [ ] Index recovered evidence for recall; expose unavailable/metadata-only states rather than implying the video was watched.
+- [ ] Test parser, redirects, blocked destinations, fallbacks and caption limits; deploy and re-read the two reported TikTok memories.
+- [ ] Verify capture → processing → recall live; signed-in browser and physical share checks require external-account access.
+
 ## App polish
 - [ ] Reminder activation, test alerts and preferences exposed directly in Reminders; handler/failure tests pass. Real delivery and signed-in preference readback blocked by external authentication and physical devices.
 - [x] Mobile and desktop destinations unified, including Pricing; all nine mobile links checked in browser and navigation tests.
