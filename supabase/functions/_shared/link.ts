@@ -37,6 +37,7 @@ function meta(html: string, key: string): string | undefined {
     const content = tag[0].match(/content\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
     if (content) return decode(content).trim() || undefined;
   }
+  return undefined;
 }
 export function parseHtml(html: string, baseUrl: string, maxText = 6000): Omit<LinkInfo,'url'> {
   const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
@@ -71,7 +72,7 @@ async function readPublic(raw: string, signal: AbortSignal, accept = 'text/html,
   let current = raw;
   for (let hop = 0; hop < 6; hop++) {
     await safeUrl(current,signal);
-    const res = await fetch(current,{ redirect:'manual',signal,headers:{ 'User-Agent':'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',Accept:accept,'Accept-Language':'en-US,en;q=0.9' } });
+    const res = await fetch(current,{ redirect:'manual',signal,headers:{ 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',Accept:accept,'Accept-Language':'en-US,en;q=0.9' } });
     const location = res.headers.get('location');
     if (res.status >= 300 && res.status < 400 && location) { current = new URL(location,current).toString(); await res.body?.cancel(); continue; }
     if (!res.ok) { await res.body?.cancel(); throw new Error(`HTTP ${res.status}`); }
