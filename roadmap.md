@@ -1,5 +1,9 @@
 # Roadmap
 
+## iPhone fast sharing and loading check
+- [ ] Add a link-only native-notification shortcut and verify its request/confirmation actions; Apple signing and physical iPhone execution remain required.
+- [ ] Investigate reported blank editor preview; local, published and custom-domain pages load, but the live editor inspection did not respond. Do not claim the reported blank screen is fixed without reproducing it.
+
 ## Fast sharing
 - [x] Streamline link/text saving and confirmation without waiting for AI; initial capture uses one database request, session/cache reads overlap, and automatic close is attempted 350 ms after confirmation. Retry, Undo and signed-out handoff covered.
 - [x] Test save/error/offline/close paths: 105 regression tests pass; browser confirms signed-out handoff retains the payload with no runtime errors; preview build OK.

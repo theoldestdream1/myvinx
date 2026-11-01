@@ -128,6 +128,20 @@ export default function SetupShortcuts() {
             </TabsList>
 
             <TabsContent value="iphone" className="space-y-4">
+              <Card><CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base"><Share2 className="w-4 h-4 text-primary" />Save Link to V</CardTitle>
+                <CardDescription>Share a link, tap Save Link to V, and receive a native “Saved to V” notification after it arrives. No Safari page opens. Your first run may ask for permission; a connection is required.</CardDescription>
+              </CardHeader><CardContent className="space-y-3">
+                <Button variant="outline" size="sm" asChild><a href="/shortcuts/save-link-to-v-unsigned.shortcut" download><Download className="w-4 h-4 mr-2" />Download unsigned creator template</a></Button>
+                <p className="text-sm text-muted-foreground">Apple signing is required to install this download. You can also create it directly on your iPhone:</p>
+                <Steps>
+                  <li>In Shortcuts create <b>Save Link to V</b>. Enable <b>Show in Share Sheet</b>, accepting <b>URLs</b> and <b>Text</b>. Set no input to <b>Stop and Respond</b>.</li>
+                  <li>Add <b>Get Text from Input</b> using <b>Shortcut Input</b>.</li>
+                  <li>Add <b>Get Contents of URL</b> using the address above. Set <b>POST</b>, header <code>Authorization</code> = <code>Bearer {k}</code>, and a <b>JSON</b> body: <code>text</code> = the text result, <code>client</code> = <code>ios-share-link</code>.</li>
+                  <li>Read <code>id</code> with <b>Get Dictionary Value</b> from the request result. Add <b>If</b> it <b>has any value</b>: <b>Show Notification</b>, title <b>Vinx</b>, body <b>Saved to V</b>. Otherwise use <b>Show Result</b> with the request result. Do not add Open URL or Open App.</li>
+                  <li>Share a link and allow network access when asked. Check Timeline for the same link. Offline or rejected requests must not display “Saved to V”. Notification visibility depends on your iPhone’s notification and Focus settings.</li>
+                </Steps>
+              </CardContent></Card>
               <div className="space-y-3 border-b border-border pb-5">
                 <h2 className="text-base font-semibold">Creator templates</h2>
                 <p className="text-sm text-muted-foreground">These downloads need Apple signing on a Mac before iPhone installation. Until signed installers are available, use the steps below.</p>
