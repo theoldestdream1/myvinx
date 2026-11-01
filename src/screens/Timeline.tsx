@@ -12,7 +12,7 @@ import { changeMemory, listMemories, retryAttachmentCleanup, memoryQueryKeys, ty
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArchiveRestore, Calendar, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { ArchiveRestore, Calendar, Loader2, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function Timeline() {
   const { user, loading } = useAuth();
@@ -38,6 +38,14 @@ export default function Timeline() {
     },
     onError: (e) => { toast.error(e.message); void client.invalidateQueries({ queryKey: ['memory-library'] }); },
   });
+  const reread = useMutation({
+    mutationFn: async (memory: MemoryWithInsights) => {
+      const { data, error } = await supabase.functions.invoke('process-memory', { body: { memoryId: memory.id, force: true } });
+      if (error || data?.error) throw new Error(data?.error || error?.message || 'Could not re-read this link');
+    },
+    onSuccess: () => { memoryQueryKeys.forEach(key => void client.invalidateQueries({ queryKey: [key] })); toast.success('V finished re-reading the link'); },
+    onError: (e) => toast.error(e.message),
+  });
   if (loading || !user) return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="animate-spin text-primary" /></div>;
   const memories = library.data?.pages.flat() ?? [];
   return <AppLayout><div className="mx-auto w-full max-w-3xl px-5 py-8 lg:p-10 pb-36">
@@ -49,16 +57,18 @@ export default function Timeline() {
     {library.isPending ? <Loader2 className="mx-auto animate-spin text-muted-foreground" /> : library.isError ? <div role="alert" className="space-y-3"><p className="text-destructive">Couldn’t load your memories.</p><Button variant="outline" onClick={() => void library.refetch()}>Try again</Button></div> : !memories.length ? <div className="py-12 text-center"><p className="font-display text-2xl text-muted-foreground">{trash ? 'Trash is empty.' : 'Nothing saved yet.'}</p></div> : <div className="space-y-4">
       {memories.map(memory => {
         const event = memory.structured_events[0];
+        const link = (memory.metadata as { link?: { url: string; final_url?: string; title?: string; site?: string; error?: string; author?: string; evidence?: string; platform?: string } } | null)?.link;
         return <article key={memory.id} className="card-ghost beam rounded-lg p-5">
           <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="eyebrow mb-2">{memory.source} · {format(new Date(trash ? memory.deleted_at ?? memory.captured_at : memory.captured_at), 'MMM d, yyyy')}</p><h2 className="font-display text-xl break-words">{event?.title ?? memory.raw_content.slice(0, 100)}</h2></div><Badge variant="outline" className="shrink-0">{trash ? 'Trashed' : memory.status}</Badge></div>
           <p className="mt-3 text-sm text-muted-foreground whitespace-pre-wrap break-words">{event?.summary ?? memory.raw_content}</p>
-          {(() => { const l = (memory.metadata as { link?: { url: string; final_url?: string; title?: string; site?: string; error?: string } } | null)?.link; if (!l) return null; const href = l.final_url || l.url; let host = href; try { host = new URL(href).hostname.replace(/^www\./, ''); } catch { /* keep raw */ } return (
+          {(() => { const l = link; if (!l) return null; const href = l.final_url || l.url; let host = href; try { const u = new URL(href); if (!/^https?:$/.test(u.protocol)) return null; host = u.hostname.replace(/^www\./, ''); } catch { return null; } return (
             <a href={href} target="_blank" rel="noopener noreferrer" className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm hover:bg-muted">
-              <span className="min-w-0 flex-1"><span className="block truncate text-foreground">{l.title || host}</span><span className="block truncate text-xs text-muted-foreground">{l.site || host}{l.error ? ' · couldn’t read this page' : ''}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-foreground">{l.title || host}</span><span className="block break-words text-xs text-muted-foreground">{l.site || host}{l.author ? ` · ${l.author}` : ''}{l.evidence === 'transcript' ? ' · Transcript available' : l.evidence === 'metadata' ? ' · Caption/title only; video not watched' : l.error || l.evidence === 'unavailable' ? ' · Link saved; details unavailable' : ''}</span></span>
             </a>); })()}
           {event && <details className="mt-3 text-sm text-muted-foreground"><summary className="cursor-pointer">Original note</summary><p className="mt-2 whitespace-pre-wrap break-words">{memory.raw_content}</p></details>}
           {!!event?.topics?.length && <div className="mt-3 flex flex-wrap gap-2">{event.topics.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}</div>}
           <div className="mt-4 flex justify-end gap-2">
+            {!trash && link && <Button variant="ghost" size="icon" title="Re-read link" aria-label="Re-read link" disabled={reread.isPending || mutation.isPending || memory.status === 'processing'} onClick={() => reread.mutate(memory)}>{reread.isPending && reread.variables?.id === memory.id ? <Loader2 className="animate-spin" /> : <RefreshCw />}</Button>}
             {trash ? <><Button variant="ghost" size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate({ memory, action: 'restore' })}><ArchiveRestore />Restore</Button><Button variant="ghost" size="icon" title="Delete permanently" aria-label="Delete permanently" disabled={mutation.isPending} onClick={() => setConfirm({ memory, action: 'purge' })}><Trash2 className="text-destructive" /></Button></> : <><Button variant="ghost" size="icon" title={memory.status === 'processed' ? 'Edit memory' : 'Available once V finishes reading'} aria-label="Edit memory" disabled={mutation.isPending || memory.status !== 'processed'} onClick={() => setEditing(memory)}><Pencil /></Button><Button variant="ghost" size="icon" title="Move to Trash" aria-label="Move to Trash" disabled={mutation.isPending} onClick={() => setConfirm({ memory, action: 'trash' })}><Trash2 /></Button></>}
           </div>
         </article>;
