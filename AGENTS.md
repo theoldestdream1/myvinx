@@ -22,3 +22,4 @@
 - Appearance is managed by the root ThemeProvider and semantic CSS token maps so every screen shares dark/light/system behaviour.
 - Desktop and mobile menus share appNavigation so no destination disappears on smaller devices.
 - The V-led tour is mounted at the root and keyed by user ID in browser storage so page navigation preserves progress without crossing account preferences.
+- Shared links use platform-specific public metadata/caption readers with explicit evidence coverage; saved links never imply video viewing, and extracted evidence is indexed and supplied to both ranked and recent-memory recall.

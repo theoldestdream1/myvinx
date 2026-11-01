@@ -22,6 +22,9 @@ function safeEqual(a: string, b: string) {
  * - Valid user JWT             -> that user
  */
 export async function authenticate(req: Request): Promise<Caller | null> {
+  // Internal jobs may use the independently verified vault-held worker secret.
+  // No identity is accepted from request data until this verification succeeds.
+  if (req.headers.has("x-worker-secret") && await isWorker(req)) return { kind: "service" };
   const header = req.headers.get("Authorization") || "";
   if (!header.startsWith("Bearer ")) return null;
   const token = header.slice(7).trim();

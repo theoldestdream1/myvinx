@@ -13,9 +13,11 @@ vi.mock('@/lib/memoryLifecycle', async () => {
   return { ...actual, retryAttachmentCleanup: vi.fn().mockResolvedValue(undefined), listMemories: async (_: string, trash: boolean) => state.rows.filter(m => !!m.deleted_at === trash).map(m => ({ ...m })), changeMemory: state.change };
 });
 import Timeline from './Timeline';
+import { supabase } from '@/integrations/supabase/client';
 
 describe('Timeline memory lifecycle interactions', () => {
   beforeEach(() => {
+    vi.mocked(supabase.functions.invoke).mockReset().mockResolvedValue({ data: null, error: null });
     state.rows = [{ id: 'memory1', user_id: 'owner', raw_content: 'Original meeting note', status: 'processed', source: 'manual', captured_at: '2026-10-30T12:00:00Z', updated_at: '2026-10-30T12:00:00Z', deleted_at: null, structured_events: [{ id: 'event1', title: 'Meeting', summary: 'Original summary', topics: ['work'] }] } as MemoryWithInsights];
     state.change.mockReset();
     state.change.mockImplementation(async (memory, action, draft) => {
@@ -30,6 +32,16 @@ describe('Timeline memory lifecycle interactions', () => {
   });
   afterEach(cleanup);
   function mount() { const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }); render(<QueryClientProvider client={client}><Timeline /></QueryClientProvider>); }
+  it('re-reads a saved video by its memory ID and reads back updated insights', async () => {
+    state.rows[0].metadata = { link: { url:'https://vt.tiktok.com/ZSgwQcMB6/',evidence:'unavailable' } };
+    vi.mocked(supabase.functions.invoke).mockImplementation(async () => {
+      state.rows[0].structured_events[0].title = 'London outfit check';
+      return { data:{ success:true },error:null };
+    });
+    mount(); fireEvent.click(await screen.findByRole('button',{name:'Re-read link'}));
+    await screen.findByRole('heading',{name:'London outfit check'});
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('process-memory',{ body:{ memoryId:'memory1',force:true } });
+  });
   it('saves edited note, title, summary, and deduplicated tags then reads them back', async () => {
     mount(); fireEvent.click(await screen.findByRole('button', { name: 'Edit memory' }));
     fireEvent.change(screen.getByLabelText('Note'), { target: { value: 'Corrected note' } });

@@ -1,5 +1,13 @@
 # Roadmap
 
+## Shared video understanding
+- [x] Route TikTok, YouTube/Shorts and Instagram/Reels through public metadata and available caption extractors; preserve immediate saving. Real TikTok and YouTube metadata verified; platform blocks remain possible.
+- [x] Index recovered evidence for recall; expose unavailable/metadata-only states rather than implying the video was watched. Timeline includes Re-read link; interaction/readback test passes.
+- [x] Test parser, redirects, blocked destinations, fallbacks and caption limits; 95 app tests and 3 Deno auth tests pass, preview build OK. Both reported TikToks reprocessed in deployed functions and V recalled exact captions/creators with citations; unauthenticated processing rejected.
+- [ ] Verify fresh physical share → processing → recall through signed-in UI; blocked by external-account session access. Existing real shares → deployed processing → actual recall verified using authenticated internal-job calls, not a browser session.
+- [ ] Full audiovisual video understanding is not implemented: metadata is not dialogue or scene analysis. Requires an accessible media/transcription source; private or blocked Instagram/TikTok content cannot be promised with anonymous HTTP readers. YouTube captions supported when exposed; live caption and Instagram availability remain unverified.
+- [ ] DNS preflight and redirect checks reject private destinations, but fetch does not pin DNS addresses; DNS rebinding protection needs runtime-supported pinning or an isolated fetch service.
+
 ## App polish
 - [ ] Reminder activation, test alerts and preferences exposed directly in Reminders; handler/failure tests pass. Real delivery and signed-in preference readback blocked by external authentication and physical devices.
 - [x] Mobile and desktop destinations unified, including Pricing; all nine mobile links checked in browser and navigation tests.
