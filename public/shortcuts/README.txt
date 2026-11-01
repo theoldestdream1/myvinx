@@ -21,3 +21,15 @@ input type; verify the Image branch on your device, since app-provided types
 can differ. For unsupported input types use Vinx directly or the manual guide.
 Internet access is required; files have the existing 10 MB image limit.
 Apple signing and real-device execution have not been performed here.
+
+Link-only fast sharing: Save Link to V
+The save-link-to-v-unsigned.shortcut template accepts URL/text share input,
+performs one POST, and shows a native notification ONLY after a memory ID
+is returned. It does not open Safari or Vinx and does not wait for AI.
+Sign it on a Mac using the same command above, with the new file names,
+or follow the Save Link to V manual recipe in Vinx's shortcut setup page.
+Allow network access on first run. Offline/network failures stop the shortcut;
+rejected or skipped saves show the response instead of a success banner.
+Actual speed and notification visibility require iPhone testing, and can be
+affected by network conditions, Focus mode and notification permissions.
+Rebuild this unsigned template using scripts/generate_link_shortcut.py.

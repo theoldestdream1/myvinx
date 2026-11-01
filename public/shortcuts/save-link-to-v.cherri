@@ -1,0 +1,21 @@
+#define name Save Link to V
+#include 'actions/web'
+#include 'actions/text'
+#define color lightblue
+#define mac false
+#define version 16.4
+#question captureKey "Paste your private capture key from Vinx. Never share it." "YOUR_KEY"
+const key = text(captureKey)
+const endpoint = "https://lotrulidgneaeysgblok.supabase.co/functions/v1/capture"
+#define from sharesheet
+#define inputs text, url
+#define noinput stopwith "Share a link or text to Save Link to V."
+const note = getText(ShortcutInput)
+const result = jsonRequest(endpoint, "POST", {"text": "{note}", "client": "ios-share-link"}, {"Authorization": "Bearer {key}"})
+const response = getDictionary(result)
+const id = getValue(response, "id")
+if id {
+  showNotification("Saved to V", "Vinx")
+} else {
+  show("Not confirmed saved. Server response: {result}")
+}
