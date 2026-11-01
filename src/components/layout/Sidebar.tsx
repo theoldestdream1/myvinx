@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
+import { useSignOut } from '@/hooks/useSignOut';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { appNavigation } from '@/lib/appNavigation';
@@ -22,7 +23,8 @@ const navItems = appNavigation.filter(item => item.path !== '/settings');
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
+  const { signOut, signingOut } = useSignOut();
   const location = useLocation();
 
   return (
@@ -91,6 +93,7 @@ export function Sidebar() {
         <Button variant="ghost"
           aria-label="Sign out"
           onClick={() => signOut()}
+          disabled={signingOut}
           className={cn(
             'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
             'text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive'

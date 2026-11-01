@@ -152,7 +152,7 @@ export default function Index() {
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Button asChild size="lg" className="rounded-full bg-primary px-7 text-primary-foreground hover:bg-primary/90">
-              <Link to="/auth">Start remembering</Link>
+              <Link to="/auth?mode=signup">Start remembering</Link>
             </Button>
             <Button asChild variant="ghost" size="lg" className="rounded-full text-muted-foreground hover:text-foreground">
               <a href="#how">See how it works</a>
@@ -209,7 +209,7 @@ export default function Index() {
             Save it in seconds. Find it by describing it. Get reminded the moment it matters.
           </p>
           <Button asChild size="lg" className="relative mt-9 rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90">
-            <Link to="/auth">Get started</Link>
+            <Link to="/auth?mode=signup">Get started</Link>
           </Button>
         </div>
       </section>
