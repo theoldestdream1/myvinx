@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Fast sharing
-- [ ] Streamline link/text saving and confirmation without waiting for AI; preserve retry, Undo and signed-out handoff.
-- [ ] Test save/error/offline/close paths; physical Android launch-to-return timing and signed-in live saving require device/account access.
+- [x] Streamline link/text saving and confirmation without waiting for AI; initial capture uses one database request, session/cache reads overlap, and automatic close is attempted 350 ms after confirmation. Retry, Undo and signed-out handoff covered.
+- [x] Test save/error/offline/close paths: 105 regression tests pass; browser confirms signed-out handoff retains the payload with no runtime errors; preview build OK.
+- [ ] Measure physical Android launch-to-return timing and signed-in live saving; blocked by device/account access. Under-three-second target and automatic return are not guaranteed on slow networks or browsers that refuse closing. Audio transcription and image uploads still add latency.
 
 ## Shared video understanding
 - [x] Route TikTok, YouTube/Shorts and Instagram/Reels through public metadata and available caption extractors; preserve immediate saving. Real TikTok and YouTube metadata verified; platform blocks remain possible.
