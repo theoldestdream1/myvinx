@@ -1,5 +1,9 @@
 # Roadmap
 
+## Fast sharing
+- [ ] Streamline link/text saving and confirmation without waiting for AI; preserve retry, Undo and signed-out handoff.
+- [ ] Test save/error/offline/close paths; physical Android launch-to-return timing and signed-in live saving require device/account access.
+
 ## Shared video understanding
 - [x] Route TikTok, YouTube/Shorts and Instagram/Reels through public metadata and available caption extractors; preserve immediate saving. Real TikTok and YouTube metadata verified; platform blocks remain possible.
 - [x] Index recovered evidence for recall; expose unavailable/metadata-only states rather than implying the video was watched. Timeline includes Re-read link; interaction/readback test passes.

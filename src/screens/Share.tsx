@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 const SHARE_CACHE = 'vinx-share-target';
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 7 * 1024 * 1024; // base64 inflates ~33%; the function caps at ~10M chars
-const AUTO_CLOSE_MS = 2200;
+const AUTO_CLOSE_MS = 350;
 
 interface SharedPayload {
   title: string;
@@ -82,7 +82,12 @@ export default function Share() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const capture = useCaptureMemory(undefined, { silent: true });
+  const [clientId] = useState(() => crypto.randomUUID());
+  const attemptedRef = useRef(false);
+  const savingRef = useRef(false);
+  const incomingRef = useRef(false);
+  const payloadRef = useRef<ReturnType<typeof readShared> | null>(null);
+  const capture = useCaptureMemory(undefined, { silent: true, remoteOnly: true, clientId, skipInitialLookup: !attemptedRef.current });
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [content, setContent] = useState('');
@@ -95,6 +100,13 @@ export default function Share() {
   const startedRef = useRef(false); // the auto-save must run exactly once (React strict mode runs effects twice)
   const lastArgs = useRef<SaveArgs | null>(null);
 
+  // Read the local share while session restoration is happening, not after it.
+  useEffect(() => {
+    payloadRef.current ??= readShared();
+    // Keep a rejected cache read handled until the authenticated effect consumes it.
+    void payloadRef.current.catch(() => undefined);
+  }, []);
+
   const previewUrl = useMemo(() => (shared ? URL.createObjectURL(shared.file) : null), [shared]);
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
@@ -104,6 +116,7 @@ export default function Share() {
   }, [loading, user, navigate]);
 
   const save = async (args: SaveArgs) => {
+    if (savingRef.current) return;
     lastArgs.current = args;
     if (args.image && args.image.size > MAX_IMAGE_BYTES) {
       setErrorMsg('That image is larger than 10 MB.');
@@ -111,11 +124,15 @@ export default function Share() {
       return;
     }
     setPhase('saving');
+    savingRef.current = true;
+    attemptedRef.current = true;
     try {
       const row = await capture.mutateAsync(args);
-      await clearShared(); // only after success, so a failure never loses what was shared
+      if ('queued' in row) throw new Error('Remote save not confirmed');
       setSaved({ id: row.id, mediaPath: row.media_url });
       setPhase('saved');
+      // Cleanup must never turn a confirmed save into an error or delay confirmation.
+      void clearShared().catch(() => undefined);
     } catch (e) {
       const msg = String((e as { message?: string })?.message ?? '');
       setErrorMsg(
@@ -124,6 +141,8 @@ export default function Share() {
           : 'Could not save this right now. Check your connection and try again.',
       );
       setPhase('error');
+    } finally {
+      savingRef.current = false;
     }
   };
 
@@ -159,15 +178,18 @@ export default function Share() {
       let payload: SharedPayload | null = null;
       let file: SharedFile | null = null;
       try {
-        ({ payload, shared: file } = await readShared());
+        ({ payload, shared: file } = await (payloadRef.current ?? readShared()));
       } catch {
-        /* treat as nothing shared */
+        setErrorMsg('Could not read what you shared. Please share it again.');
+        setPhase('error');
+        return;
       }
       const text = composeText(payload);
       const url = !!payload?.url;
       setShared(file);
       setContent(text);
       setHasUrl(url);
+      incomingRef.current = !!text || !!file;
 
       if (!text && !file) {
         setPhase('manual'); // opened directly (not via a share): offer a plain note box
@@ -199,12 +221,13 @@ export default function Share() {
   // After saving, get out of the way: try to close this window and return to the app you shared from.
   // Browsers only allow this for some launches, so if it doesn't close we say so instead of hanging.
   useEffect(() => {
-    if (phase !== 'saved') return;
+    if (phase !== 'saved' || !incomingRef.current) return;
+    let fallback: number | undefined;
     const t = window.setTimeout(() => {
-      window.close();
-      window.setTimeout(() => setCloseFailed(true), 500);
+      try { window.close(); } catch { /* the fallback stays visible */ }
+      fallback = window.setTimeout(() => setCloseFailed(true), 150);
     }, AUTO_CLOSE_MS);
-    return () => window.clearTimeout(t); // tapping Undo changes the phase, which cancels the close
+    return () => { window.clearTimeout(t); if (fallback !== undefined) window.clearTimeout(fallback); };
   }, [phase]);
 
   const undo = async () => {
@@ -252,7 +275,7 @@ export default function Share() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <Card className="w-full max-w-md bg-card/60 border-border/50">
+      <Card className={`w-full max-w-md bg-card/60 border-border/50 ${phase === 'saved' ? 'border-0 bg-transparent shadow-none' : ''}`}>
         <CardContent className="p-6 space-y-5">
           {/* ---- saving / transcribing ---- */}
           {(phase === 'saving' || phase === 'transcribing') && (
@@ -268,17 +291,17 @@ export default function Share() {
           {(phase === 'saved' || phase === 'undoing') && (
             <div className="space-y-4" aria-live="polite">
               <div className="flex flex-col items-center text-center gap-2">
-                <CheckCircle2 className="w-12 h-12 text-memory-processed" />
+                <CheckCircle2 className="w-12 h-12 text-foreground" />
                 <p className="text-lg font-semibold text-foreground">Saved to Vinx</p>
                 <p className="text-sm text-muted-foreground">
-                  Reading it now. Later, just describe it and Vinx will find it.
+                  {closeFailed ? 'You can return to your previous app.' : 'All saved.'}
                 </p>
               </div>
 
-              {shared?.kind === 'image' && previewUrl && (
+              {closeFailed && shared?.kind === 'image' && previewUrl && (
                 <img src={previewUrl} alt="What you shared" className="mx-auto max-h-40 rounded-md border border-border/50 object-contain" />
               )}
-              {snippet && (
+              {closeFailed && snippet && (
                 <p className="rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground whitespace-pre-wrap break-words">
                   {snippet}
                 </p>
@@ -289,24 +312,19 @@ export default function Share() {
                   {phase === 'undoing' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Undo2 className="w-4 h-4 mr-2" />}
                   Undo
                 </Button>
-                <Button className="flex-1" onClick={() => navigate('/dashboard')}>
+                <Button className="flex-1" onClick={() => { incomingRef.current = false; setPhase('manual'); navigate('/dashboard'); }}>
                   Open Vinx
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
 
-              {closeFailed && (
-                <p className="text-center text-xs text-muted-foreground">
-                  All done. You can switch back to the app you were in.
-                </p>
-              )}
             </div>
           )}
 
           {/* ---- undone ---- */}
           {phase === 'undone' && (
             <div className="flex flex-col items-center text-center gap-3 py-2">
-              <p className="font-medium text-foreground">Removed. Nothing was kept.</p>
+              <p className="font-medium text-foreground">Moved to Trash.</p>
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 Open Vinx
               </Button>
@@ -325,7 +343,7 @@ export default function Share() {
                 <Button variant="ghost" className="flex-1" onClick={() => setPhase('manual')}>
                   Edit
                 </Button>
-                <Button className="flex-1" onClick={() => lastArgs.current && save(lastArgs.current)}>
+                <Button className="flex-1" disabled={!lastArgs.current} onClick={() => lastArgs.current && save(lastArgs.current)}>
                   Try again
                 </Button>
               </div>

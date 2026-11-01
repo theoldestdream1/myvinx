@@ -72,9 +72,12 @@ export interface CaptureInput {
  * The one place a memory is written. `clientId` makes it safe to repeat: if a previous attempt already
  * reached the server (but the reply was lost), the existing row is returned instead of a duplicate.
  */
-export async function saveMemory(userId: string, { content, source, image, imageName, metadata }: CaptureInput, clientId: string) {
-  const { data: existing } = await supabase.from('raw_memories').select('*').eq('user_id', userId).eq('metadata->>client_id', clientId).limit(1);
-  if (existing && existing.length) return existing[0];
+export async function saveMemory(userId: string, { content, source, image, imageName, metadata }: CaptureInput, clientId: string, checkExisting = true) {
+  if (checkExisting) {
+    const { data: existing, error: lookupError } = await supabase.from('raw_memories').select('*').eq('user_id', userId).eq('metadata->>client_id', clientId).limit(1);
+    if (lookupError) throw lookupError;
+    if (existing && existing.length) return existing[0];
+  }
 
   let mediaPath: string | null = null;
   if (image) {
@@ -122,18 +125,18 @@ export interface QueuedResult { queued: true; id: string; media_url: null; sourc
  * Shared by the dashboard Quick Capture and the full Capture form.
  * With no connection the memory is kept on this device and sent automatically when back online.
  */
-export function useCaptureMemory(onCaptured?: () => void, options: { silent?: boolean } = {}) {
+export function useCaptureMemory(onCaptured?: () => void, options: { silent?: boolean; remoteOnly?: boolean; clientId?: string; skipInitialLookup?: boolean } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CaptureInput): Promise<Awaited<ReturnType<typeof saveMemory>> | QueuedResult> => {
       if (!user) throw new Error('Not authenticated');
-      const clientId = crypto.randomUUID();
+      const clientId = options.clientId ?? crypto.randomUUID();
       try {
-        return await saveMemory(user.id, input, clientId);
+        return await saveMemory(user.id, input, clientId, !options.skipInitialLookup);
       } catch (e) {
-        if (!isNetworkError(e)) throw e;
+        if (options.remoteOnly || !isNetworkError(e)) throw e;
         const kept = await enqueue({ id: clientId, userId: user.id, content: input.content, source: input.source, image: input.image ?? null, imageName: input.imageName ?? (input.image as File | null | undefined)?.name, metadata: input.metadata });
         if (!kept) throw e;
         return { queued: true, id: clientId, media_url: null, source: input.source };
