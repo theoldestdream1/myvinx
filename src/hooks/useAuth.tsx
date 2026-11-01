@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null; needsConfirmation: boolean; exists: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -53,31 +53,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
+    const redirectUrl = `${window.location.origin}/auth?confirmed=1`;
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          display_name: displayName,
-        },
+        data: { display_name: displayName?.trim() },
       },
     });
-    return { error };
+    // Supabase hides existing accounts by returning a user with no identities.
+    const exists = !!data?.user && (data.user.identities?.length ?? 0) === 0;
+    return { error, needsConfirmation: !error && !data?.session, exists };
   };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
     return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } finally {
+      // Drop anything tied to the session even if the network call failed.
+      setSession(null);
+      setUser(null);
+    }
   };
 
   return (
