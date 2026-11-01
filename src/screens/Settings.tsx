@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from "@/lib/router-compat";
 import { useAuth } from '@/hooks/useAuth';
+import { useSignOut } from '@/hooks/useSignOut';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -77,6 +78,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 
 export default function Settings() {
   const { user, loading, signOut } = useAuth();
+  const { signOut: safeSignOut, signingOut } = useSignOut();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [params, setParams] = useSearchParams();
@@ -201,7 +203,7 @@ export default function Settings() {
               <Group label="More">
                 <Row icon={Sparkles} title="Take a tour with V" hint="Let her show you around" onClick={startTour} />
                 <Row icon={SlidersHorizontal} title="Advanced settings" hint="Search health, keys, export, account" onClick={() => setParams({ view: 'advanced' })} />
-                <Row icon={LogOut} title="Sign out" onClick={async () => { await signOut(); navigate('/auth'); }} />
+                <Row icon={signingOut ? Loader2 : LogOut} title={signingOut ? 'Signing out…' : 'Sign out'} onClick={safeSignOut} />
               </Group>
             </>
           )}
