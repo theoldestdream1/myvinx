@@ -1,8 +1,9 @@
 # Roadmap
 
 ## iPhone fast sharing and loading check
-- [ ] Add a link-only native-notification shortcut and verify its request/confirmation actions; Apple signing and physical iPhone execution remain required.
-- [ ] Investigate reported blank editor preview; local, published and custom-domain pages load, but the live editor inspection did not respond. Do not claim the reported blank screen is fixed without reproducing it.
+- [x] Build link-only unsigned creator template and manual iPhone recipe; served download parsed successfully, four action/confirmation tests and all 105 app tests pass; preview build OK.
+- [ ] Sign/publish the shortcut with Apple and verify real share → native notification → Timeline readback on iPhone; blocked by Apple tooling/device and external-account access. No speed guarantee.
+- [ ] Resolve reported blank editor preview; local, published and custom-domain pages load, mobile app navigation/reload verified without runtime errors. Live editor inspection timed out, then viewers disconnected; no reproducible app failure or confirmed fix.
 
 ## Fast sharing
 - [x] Streamline link/text saving and confirmation without waiting for AI; initial capture uses one database request, session/cache reads overlap, and automatic close is attempted 350 ms after confirmation. Retry, Undo and signed-out handoff covered.
