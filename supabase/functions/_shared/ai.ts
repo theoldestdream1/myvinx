@@ -12,11 +12,12 @@ export const CHAT_MODEL = Deno.env.get("AI_CHAT_MODEL") || "google/gemini-2.5-fl
 export const FAST_MODEL = Deno.env.get("AI_FAST_MODEL") || "google/gemini-2.5-flash-lite";
 export const EMBED_MODEL = Deno.env.get("AI_EMBED_MODEL") || "google/gemini-embedding-2";
 
-// NVIDIA NIM (build.nvidia.com) is OpenAI-compatible. Override the models with secrets if wanted:
-//   NVIDIA_CHAT_MODEL, NVIDIA_FAST_MODEL   (e.g. nvidia/llama-3.3-nemotron-super-49b-v1)
+// NVIDIA NIM (build.nvidia.com) is OpenAI-compatible. Override the models with secrets if wanted.
+// Defaults are the two Nemotron 3.5 models verified working on this account (2026-11):
+// super-vl answers chat in V's voice and also takes images; bolt does the fast JSON tasks.
 export const NVIDIA_BASE = Deno.env.get("NVIDIA_API_BASE") || "https://integrate.api.nvidia.com/v1";
-export const NVIDIA_CHAT_MODEL = Deno.env.get("NVIDIA_CHAT_MODEL") || "meta/llama-3.3-70b-instruct";
-export const NVIDIA_FAST_MODEL = Deno.env.get("NVIDIA_FAST_MODEL") || "meta/llama-3.1-8b-instruct";
+export const NVIDIA_CHAT_MODEL = Deno.env.get("NVIDIA_CHAT_MODEL") || "nvidia/nemotron-3.5-super-vl-120b-a12b";
+export const NVIDIA_FAST_MODEL = Deno.env.get("NVIDIA_FAST_MODEL") || "nvidia/nemotron-3.5-bolt-e4b";
 
 export function lovableKey(): string | undefined {
   return Deno.env.get("LOVABLE_API_KEY") || undefined;
