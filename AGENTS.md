@@ -25,3 +25,4 @@
 - The V-led tour is mounted at the root and keyed by user ID in browser storage so page navigation preserves progress without crossing account preferences.
 - Shared links use platform-specific public metadata/caption readers with explicit evidence coverage; saved links never imply video viewing, and extracted evidence is indexed and supplied to both ranked and recent-memory recall.
 - Share capture uses a stable per-attempt client ID, skips the duplicate lookup only on its first submission, and confirms remote persistence rather than an offline queue; retries check for an existing row before writing.
+- Shared GemMark renders the approved uploaded logo through a CDN asset pointer; installed-app and notification icons derive from the same source, with a local downscaled favicon, to keep branding consistent.

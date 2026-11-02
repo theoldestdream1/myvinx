@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Vinx logo
-- [ ] Refine V's head-and-shoulders logo using the user's supplied silver crystal frame and blue-eye reference; await approval before updating app icons.
+- [x] Apply final silver-eye upload across shared app branding, favicon, installed-app icons and notification badge; 105 tests pass, preview build OK, desktop/mobile logos and icon loading verified. Existing phone installs may refresh their icons later; physical OS icon refresh not verified.
 
 ## iPhone fast sharing and loading check
 - [x] Build link-only unsigned creator template and manual iPhone recipe; served download parsed successfully, four action/confirmation tests and all 105 app tests pass; preview build OK.
