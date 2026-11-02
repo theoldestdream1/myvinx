@@ -52,6 +52,7 @@ export async function chatCompletion(
   const key = nvidiaKey();
   if (key && !messagesUseMedia(messages)) {
     const nvidiaModel = isFastModel(model) ? NVIDIA_FAST_MODEL : NVIDIA_CHAT_MODEL;
+    const startedAt = Date.now();
     try {
       const res = await fetch(`${NVIDIA_BASE}/chat/completions`, {
         method: "POST",
@@ -59,7 +60,10 @@ export async function chatCompletion(
         body: JSON.stringify({ model: nvidiaModel, messages, temperature: opts.temperature }),
         signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
       });
-      if (res.ok) return res;
+      if (res.ok) {
+        console.log(`ai: nvidia ${nvidiaModel} ${Date.now() - startedAt}ms`);
+        return res;
+      }
       // Free the socket, then let the gateway answer instead.
       await res.text().catch(() => {});
       console.error(`nvidia ${nvidiaModel} answered ${res.status}; falling back to gateway ${model}`);
