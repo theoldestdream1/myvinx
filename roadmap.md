@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Vinx logo
-- [ ] Apply the final approved silver-eye upload across shared app branding, browser favicon, installed-app icons and notification badge; verify rendered placements and asset loading.
+- [x] Apply final silver-eye upload across shared app branding, favicon, installed-app icons and notification badge; 105 tests pass, preview build OK, desktop/mobile logos and icon loading verified. Existing phone installs may refresh their icons later; physical OS icon refresh not verified.
 
 ## iPhone fast sharing and loading check
 - [x] Build link-only unsigned creator template and manual iPhone recipe; served download parsed successfully, four action/confirmation tests and all 105 app tests pass; preview build OK.
