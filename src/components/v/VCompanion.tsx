@@ -37,12 +37,17 @@ function poseFor(mood: Mood | undefined): Pose {
 const SPRING = { type: "spring" as const, stiffness: 170, damping: 20, mass: 0.9 };
 
 /** V lives on every app screen: idles, wanders between corners, reacts, and takes voice notes in place. */
+/** V's resting seat: 1 = bottom-right, 0 = bottom-left (Ask page, clear of the send button). */
+export function homeSeat(pathname: string): 0 | 1 {
+  return pathname.startsWith("/query") ? 0 : 1;
+}
+
 export function VCompanion() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   // On Ask, the send button lives bottom-right, so V's seat moves to the bottom-left there.
-  const home = pathname.startsWith("/query") ? 0 : 1;
+  const home = homeSeat(pathname);
   const [drag, setDrag] = useState<null | { dx: number; dy: number }>(null);
   const [lift, setLift] = useState(0); // where she was dropped vertically (px, negative = up)
   const dragRef = useRef<{ sx: number; sy: number; x0: number; lift0: number; moved: boolean } | null>(null);
