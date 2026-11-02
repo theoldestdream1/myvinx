@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 
 const navigate = vi.fn();
-vi.mock("@/lib/router-compat", () => ({ useNavigate: () => navigate }));
+vi.mock("@/lib/router-compat", () => ({ useNavigate: () => navigate, useLocation: () => ({ pathname: (globalThis as { __vPath?: string }).__vPath ?? "/dashboard" }) }));
 vi.mock("@/hooks/useVoiceRecording", () => ({
   useVoiceRecording: () => ({ isRecording: false, startRecording: vi.fn(), stopRecording: vi.fn(), cancelRecording: vi.fn() }),
 }));
 vi.mock("@/hooks/useCaptureMemory", () => ({ useCaptureMemory: () => ({ capture: vi.fn() }) }));
 vi.mock("@/lib/v/voice", () => ({ vSpeak: vi.fn(), vHush: vi.fn() }));
 
-import { VCompanion } from "./VCompanion";
+import { VCompanion, homeSeat } from "./VCompanion";
 import { vAgent } from "@/lib/avatar/bus";
 import { loadPrefs, savePrefs } from '@/lib/avatar/prefs';
 
@@ -65,5 +65,15 @@ describe("V's menu", () => {
     openMenu();
     act(() => { (vAgent as any).say?.("hello", "happy"); });
     expect(screen.getByRole("button", { name: /^Ask$/ })).toBeTruthy();
+  });
+});
+
+describe("V's seat", () => {
+  it("sits bottom-left on Ask so the send button stays clear", () => {
+    expect(homeSeat("/query")).toBe(0);
+  });
+  it("sits bottom-right everywhere else", () => {
+    expect(homeSeat("/dashboard")).toBe(1);
+    expect(homeSeat("/capture")).toBe(1);
   });
 });
