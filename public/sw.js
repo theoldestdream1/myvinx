@@ -1,9 +1,13 @@
 /* Vinx service worker
  * - Web Push: reminders + daily brief, with Done / Snooze buttons that work from the lock screen
  * - Share target: receives "Share -> Vinx" from other apps (Android / desktop Chromium)
- * - No app-shell caching: pages and assets always use the network
+ * - Share fast-path: only the /share page and its hashed /assets are cached, so Share -> Vinx
+ *   opens from the device; every other page always uses the network
  */
 const SHARE_CACHE = 'vinx-share-target'; // survives SW upgrades on purpose
+const SHARE_SHELL = 'vinx-share-shell-v1';
+const host = self.location.hostname;
+const SHELL_ENABLED = !(host === 'localhost' || host.startsWith('id-preview--') || host.startsWith('preview--') || host.includes('lovableproject'));
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,7 +40,44 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (!SHELL_ENABLED || req.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (req.mode === 'navigate' && url.pathname === '/share') {
+    event.respondWith(shareShell(req, event));
+    return;
+  }
+  // Hashed build files never change, so a cached copy is always correct.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(caches.open(SHARE_SHELL).then(async (c) => {
+      const hit = await c.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok) c.put(req, res.clone());
+      return res;
+    }));
+  }
 });
+
+// Serve the cached /share page instantly (only if all its files are cached), refresh in background.
+async function shareShell(req, event) {
+  const cache = await caches.open(SHARE_SHELL);
+  const refresh = fetch(req).then(async (res) => {
+    if (res.ok && (res.headers.get('content-type') || '').includes('text/html')) {
+      const html = await res.clone().text();
+      const files = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+      await Promise.all(files.map((f) => cache.match(f).then((h) => h || cache.add(f)))).catch(() => {});
+      await cache.put('/__share-html', new Response(html, { headers: { 'Content-Type': 'text/html' } }));
+    }
+    return res;
+  });
+  const cached = await cache.match('/__share-html');
+  if (cached) {
+    const html = await cached.clone().text();
+    const files = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+    const ok = (await Promise.all(files.map((f) => cache.match(f)))).every(Boolean);
+    if (ok) { event.waitUntil(refresh.catch(() => {})); return cached; }
+  }
+  return refresh;
+}
 
 async function handleShare(request) {
   try {
