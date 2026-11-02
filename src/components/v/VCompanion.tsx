@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useReducedMotion } from "framer-motion";
 import { useLocation, useNavigate } from "@/lib/router-compat";
 import { subscribe, type AvatarEvent, type Mood } from "@/lib/avatar/bus";
@@ -247,11 +247,11 @@ export function VCompanion() {
   const walkDir = side === "right" ? 1 : -1;
   const shownPose: Pose = phase === "listening" || phase === "prompting" ? "listen" : phase === "transcribing" || phase === "saving" ? "think" : act === "cheer" ? "happy" : act === "poke" ? "smug" : pose;
 
-  const onDown = (e: React.PointerEvent) => {
+  const onDown = (e: PointerEvent<HTMLElement>) => {
     if (focus || phase === "listening") return;
     dragRef.current = { sx: e.clientX, sy: e.clientY, x0: 12 + spot * span, lift0: lift, moved: false };
   };
-  const onMove = (e: React.PointerEvent) => {
+  const onMove = (e: PointerEvent<HTMLElement>) => {
     const d = dragRef.current; if (!d) return;
     const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
     if (!d.moved && Math.hypot(dx, dy) < 8) return;

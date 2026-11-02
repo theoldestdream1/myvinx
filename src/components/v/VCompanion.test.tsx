@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 
 const navigate = vi.fn();
-vi.mock("@/lib/router-compat", () => ({ useNavigate: () => navigate }));
+vi.mock("@/lib/router-compat", () => ({ useNavigate: () => navigate, useLocation: () => ({ pathname: (globalThis as { __vPath?: string }).__vPath ?? "/dashboard" }) }));
 vi.mock("@/hooks/useVoiceRecording", () => ({
   useVoiceRecording: () => ({ isRecording: false, startRecording: vi.fn(), stopRecording: vi.fn(), cancelRecording: vi.fn() }),
 }));
