@@ -297,7 +297,7 @@ export function VOpener({ onDone }: { onDone: () => void }) {
           <div className="h-px w-40 overflow-hidden bg-border">
             <div className="h-full bg-primary" style={{ width: `${p * 100}%` }} />
           </div>
-          {!label && <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">press anywhere · or space</p>}
+          {!label && <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">press and hold anywhere</p>}
         </div>
       )}
 
@@ -306,9 +306,9 @@ export function VOpener({ onDone }: { onDone: () => void }) {
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={skip}
-          className="absolute right-5 top-5 rounded-full border border-border/60 px-3 py-1 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          className="absolute right-5 top-5 rounded-full border border-border bg-card/70 px-4 py-2 font-mono text-xs text-foreground transition-colors hover:bg-card"
         >
-          skip
+          Skip intro →
         </button>
       )}
     </div>
