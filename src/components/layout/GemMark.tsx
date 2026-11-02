@@ -1,4 +1,4 @@
-import logo from '@/assets/vinx-logo-header.png.asset.json';
+import logo from '@/assets/vinx-logo-header-final.png.asset.json';
 
 export function GemMark({ className = 'h-8 w-8' }: { className?: string; textClass?: string }) {
   return (
