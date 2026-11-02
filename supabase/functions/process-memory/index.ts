@@ -96,7 +96,7 @@ serve(async (req) => {
   try {
     const caller = await authenticate(req);
     if (!caller) return json({ error: "Unauthorized" }, 401);
-    if (!lovableKey()) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!lovableKey() && !nvidiaKey()) throw new Error("No AI provider is configured");
 
     const body = await req.json();
     memoryId = body?.memoryId;
