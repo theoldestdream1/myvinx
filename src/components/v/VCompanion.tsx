@@ -253,7 +253,7 @@ export function VCompanion() {
   const shownPose: Pose = phase === "listening" || phase === "prompting" ? "listen" : phase === "transcribing" || phase === "saving" ? "think" : act === "cheer" ? "happy" : act === "poke" ? "smug" : pose;
 
   const onDown = (e: PointerEvent<HTMLElement>) => {
-    if (focus || phase === "listening") return;
+    if (focus) return;
     dragRef.current = { sx: e.clientX, sy: e.clientY, x0: 12 + spot * span, lift0: lift, moved: false };
   };
   const onMove = (e: PointerEvent<HTMLElement>) => {
