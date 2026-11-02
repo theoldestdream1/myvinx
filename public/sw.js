@@ -136,8 +136,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'Vinx', {
       body: data.body || '',
       tag: data.tag || 'vinx',
-      icon: '/__l5e/assets-v1/2af17854-3c0f-4d58-bdd9-de7d5dfdcde4/vinx-icon-192.png',
-      badge: '/__l5e/assets-v1/ce716f6a-850f-48bb-aaae-1f7ba71bc68c/vinx-badge-96.png',
+      icon: '/icon-192.png',
+      badge: '/badge-96.png',
       requireInteraction: isReminder,
       actions,
       data: {
@@ -177,7 +177,7 @@ async function runAction(d, action) {
   // Quick, self-dismissing confirmation (tapping a button otherwise gives no feedback)
   await self.registration.showNotification(action === 'done' ? 'Marked done' : 'Snoozed for 1 hour', {
     tag: 'vinx-ack',
-    icon: '/__l5e/assets-v1/2af17854-3c0f-4d58-bdd9-de7d5dfdcde4/vinx-icon-192.png',
+    icon: '/icon-192.png',
     silent: true,
   });
   await new Promise((r) => setTimeout(r, 2500));
