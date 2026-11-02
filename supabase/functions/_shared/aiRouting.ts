@@ -13,9 +13,9 @@ export function messagesUseMedia(messages: unknown[]): boolean {
   }
 }
 
-/** Gemini gateway model names that mark a cheap/fast tier. */
+/** Gemini gateway model names that mark a cheap/fast tier (note: plain "flash" is the main chat tier). */
 export function isFastModel(model: string): boolean {
-  return /lite|flash|fast|mini/i.test(model);
+  return /lite|mini|nano|small|fast/i.test(model);
 }
 
 /**
