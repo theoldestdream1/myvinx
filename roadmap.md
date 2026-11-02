@@ -1,5 +1,8 @@
 # Roadmap
 
+## Vinx logo
+- [ ] Refine V's head-and-shoulders logo using the user's supplied silver crystal frame and blue-eye reference; await approval before updating app icons.
+
 ## iPhone fast sharing and loading check
 - [x] Build link-only unsigned creator template and manual iPhone recipe; served download parsed successfully, four action/confirmation tests and all 105 app tests pass; preview build OK.
 - [ ] Sign/publish the shortcut with Apple and verify real share → native notification → Timeline readback on iPhone; blocked by Apple tooling/device and external-account access. No speed guarantee.
