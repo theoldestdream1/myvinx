@@ -3,7 +3,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { adminClient, authenticate } from "../_shared/auth.ts";
 import { screenText } from "../_shared/redact.ts";
 import { transcribeAudio } from "../_shared/transcribe.ts";
-import { chatCompletion, CHAT_MODEL, lovableKey } from "../_shared/ai.ts";
+import { chatCompletion, CHAT_MODEL, lovableKey, nvidiaKey } from "../_shared/ai.ts";
 import { embed, toPgVector } from "../_shared/embeddings.ts";
 import { buildSearchText, parseImageUnderstanding } from "../_shared/text.ts";
 import { fetchLink, findFirstUrl, linkEvidenceText, type LinkInfo } from "../_shared/link.ts";
@@ -96,7 +96,7 @@ serve(async (req) => {
   try {
     const caller = await authenticate(req);
     if (!caller) return json({ error: "Unauthorized" }, 401);
-    if (!lovableKey()) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!lovableKey() && !nvidiaKey()) throw new Error("No AI provider is configured");
 
     const body = await req.json();
     memoryId = body?.memoryId;

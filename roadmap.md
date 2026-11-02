@@ -21,6 +21,13 @@
 - [ ] Full audiovisual video understanding is not implemented: metadata is not dialogue or scene analysis. Requires an accessible media/transcription source; private or blocked Instagram/TikTok content cannot be promised with anonymous HTTP readers. YouTube captions supported when exposed; live caption and Instagram availability remain unverified.
 - [ ] DNS preflight and redirect checks reject private destinations, but fetch does not pin DNS addresses; DNS rebinding protection needs runtime-supported pinning or an isolated fetch service.
 
+## V's AI brain (NVIDIA)
+- [x] Route plain-text AI calls through the owner's NVIDIA NIM account: Nemotron 3.5 super-vl (chat + extraction + query answers), bolt for fast search JSON; vision/audio and any NVIDIA failure fall back to the Gemini gateway. Models probed live on the account — catalog entries the key cannot call were rejected.
+- [x] Rewrite V's query persona as a shared prompt module (dry wit, sass subordinate to clarity, honest about unavailable video content) used by the app and Telegram; live questions answered in character with citations; extraction reprocess run confirmed NVIDIA served it (logged with model + latency).
+- [x] Regression suite: 114 tests pass; five AI-consuming functions deployed with the new routing; builds OK.
+- [ ] See V's new voice in the signed-in app UI and real phone Telegram — blocked by externally managed authentication and device access (the same code path already verified through live server calls).
+- [ ] Optional later: route vision to NVIDIA's vision-capable model after comparing its screenshot accuracy against Gemini on real captures; super-vl accepted images in testing.
+
 ## App polish
 - [ ] Reminder activation, test alerts and preferences exposed directly in Reminders; handler/failure tests pass. Real delivery and signed-in preference readback blocked by external authentication and physical devices.
 - [x] Mobile and desktop destinations unified, including Pricing; all nine mobile links checked in browser and navigation tests.
