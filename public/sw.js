@@ -6,7 +6,7 @@
  */
 const SHARE_CACHE = 'vinx-share-target'; // survives SW upgrades on purpose
 const SHARE_SHELL = 'vinx-share-shell-v1';
-const host = self.location.hostname;
+const host = self.location?.hostname || (self.location?.origin || '').replace(/^https?:\/\//, '');
 const SHELL_ENABLED = !(host === 'localhost' || host.startsWith('id-preview--') || host.startsWith('preview--') || host.includes('lovableproject'));
 
 self.addEventListener('install', (event) => {
