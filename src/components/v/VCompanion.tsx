@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useReducedMotion } from "framer-motion";
-import { useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/router-compat";
 import { subscribe, type AvatarEvent, type Mood } from "@/lib/avatar/bus";
 import { loadPrefs, savePrefs, subscribePrefs } from "@/lib/avatar/prefs";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -40,6 +40,13 @@ const SPRING = { type: "spring" as const, stiffness: 170, damping: 20, mass: 0.9
 export function VCompanion() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // On Ask, the send button lives bottom-right, so V's seat moves to the bottom-left there.
+  const home = pathname.startsWith("/query") ? 0 : 1;
+  const [drag, setDrag] = useState<null | { dx: number; dy: number }>(null);
+  const [lift, setLift] = useState(0); // where she was dropped vertically (px, negative = up)
+  const dragRef = useRef<{ sx: number; sy: number; x0: number; lift0: number; moved: boolean } | null>(null);
+  const justDragged = useRef(false);
   const [phase, setPhase] = useState<Phase>("rest");
   const [bubble, setBubble] = useState<Bubble | null>(null);
   const [pose, setPose] = useState<Pose>("sit");
@@ -222,19 +229,48 @@ export function VCompanion() {
     return () => clearTimeout(t);
   }, [reduced, say, enabled, hidden]);
 
+  // Changing page sends her to that page's seat (unless she was just dragged somewhere).
+  useEffect(() => {
+    setSpot(home); setLift(0);
+  }, [home]);
+
   if (hidden || !enabled) return null;
 
   const focus = phase !== "rest" && phase !== "menu";
   const base = isMobile ? 88 : 116;
   const h = focus ? Math.min(260, base * 2.4) : bubble || phase === "menu" ? base * 1.3 : busy ? base * 1.15 : base;
   const w = h * ASPECT;
-  const x = focus ? (vw - w) / 2 : 12 + spot * Math.max(0, vw - w - 24);
+  const span = Math.max(1, vw - w - 24);
+  const x = focus ? (vw - w) / 2 : 12 + spot * span + (drag?.dx ?? 0);
   const bottom = isMobile ? 92 : 20;
-  const y = focus ? -Math.max(80, (typeof window !== "undefined" ? innerHeight : 700) * 0.18) : bubble || phase === "menu" ? 0 : rise;
+  const y = focus ? -Math.max(80, (typeof window !== "undefined" ? innerHeight : 700) * 0.18) : lift + (drag?.dy ?? 0) + (bubble || phase === "menu" || lift ? 0 : rise);
   const walkDir = side === "right" ? 1 : -1;
   const shownPose: Pose = phase === "listening" || phase === "prompting" ? "listen" : phase === "transcribing" || phase === "saving" ? "think" : act === "cheer" ? "happy" : act === "poke" ? "smug" : pose;
 
+  const onDown = (e: React.PointerEvent) => {
+    if (focus || phase === "listening") return;
+    dragRef.current = { sx: e.clientX, sy: e.clientY, x0: 12 + spot * span, lift0: lift, moved: false };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = dragRef.current; if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) < 8) return;
+    if (!d.moved) { d.moved = true; (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); setPhase("rest"); setBubble(null); setAct(null); }
+    const maxUp = -(innerHeight - h - (isMobile ? 92 : 20) - 70);
+    const ny = Math.min(0, Math.max(maxUp, d.lift0 + dy));
+    setDrag({ dx, dy: ny - d.lift0 });
+  };
+  const onUp = () => {
+    const d = dragRef.current; dragRef.current = null;
+    if (!d?.moved || !drag) return;
+    justDragged.current = true; window.setTimeout(() => { justDragged.current = false; }, 0);
+    const nx = Math.min(1, Math.max(0, (d.x0 + drag.dx - 12) / span));
+    setSpot(nx); setLift(d.lift0 + drag.dy); setDrag(null); setRise(0);
+    stayHomeUntil.current = Date.now() + 120000; lastActivity.current = Date.now();
+  };
+
   const tap = () => {
+    if (justDragged.current) return;
     lastActivity.current = Date.now();
     if (phase === "listening") { rec.stopRecording(); return; }
     if (focus) return;
@@ -249,7 +285,7 @@ export function VCompanion() {
     stayHomeUntil.current = Date.now() + 45000;
     setTp(true); setAct(null); setBubble(null); setPhase("rest"); setRise(0);
     window.setTimeout(() => {
-      setSpot(1); setSide("left"); setPose("sit");
+      setSpot(home); setLift(0); setSide("left"); setPose("sit");
       window.setTimeout(() => { setTp(false); const l = line("home", getPersonality()); say(l.text, l.mood); }, 60);
     }, 220);
   };
@@ -262,6 +298,7 @@ export function VCompanion() {
 
   const status = phase === "prompting" ? "V is talking" : phase === "listening" ? "Listening · tap V to finish" : phase === "transcribing" ? "Catching every word…" : phase === "saving" ? "Saving…" : "";
   const bubbleAlign = focus ? "center" : spot > 0.5 ? "right" : "left";
+  const awayFromHome = Math.abs(spot - home) > 0.08 || lift < -4;
 
   return (
     <>
@@ -278,13 +315,13 @@ export function VCompanion() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {!focus && (spot < 0.92 || act === "walk") && !tp && (
+        {!focus && (awayFromHome || act === "walk") && !drag && !tp && (
           <motion.button
             key="home"
             type="button"
             onClick={goHome}
             initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="fixed right-3 z-50 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
+            className={`fixed ${home === 0 ? "left-3" : "right-3"} z-50 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md`}
             style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom - 4}px)` }}
             aria-label="Tap to bring V back to her seat"
             data-testid="v-home"
@@ -299,7 +336,7 @@ export function VCompanion() {
         style={{ bottom: `calc(env(safe-area-inset-bottom) + ${bottom}px)` }}
         initial={false}
         animate={{ x, y, opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
-        transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: [0.45, 0, 0.35, 1] }, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } }}
+        transition={drag ? { x: { duration: 0 }, y: { duration: 0 } } : tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: [0.45, 0, 0.35, 1] }, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } } : { x: SPRING, y: { type: "spring", stiffness: 40, damping: 12 }, opacity: { duration: 0.25 }, scale: { type: "spring", stiffness: 260, damping: 16 } }}
         data-testid="v-companion"
         data-phase={phase}
       >
@@ -347,6 +384,11 @@ export function VCompanion() {
           type="button"
           aria-label={phase === "listening" ? "Stop and save" : "V, your companion. Tap her."}
           onClick={tap}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
+          style={{ touchAction: "none", cursor: drag ? "grabbing" : "grab" }}
           className="pointer-events-auto relative block"
           initial={false}
           animate={{
