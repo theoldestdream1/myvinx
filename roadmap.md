@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Approved launch mobile fixes
-- [ ] Preserve Hold to Wake; lift landing V and her return button above phone bottom controls, including opener handoff.
-- [ ] Remove landing-page vertical scroll clipping without introducing horizontal overflow.
-- [ ] Compress all live crystal pose images to WebP; verify hold → formation → corner, reload, scrolling, and image loading on mobile and desktop.
+- [x] Preserve Hold to Wake; landing V, return button and opener handoff share a mobile safe-area offset of 76px plus the device inset; desktop remains unchanged.
+- [x] Remove landing-page vertical scroll clipping; mobile and desktop browser checks reach the footer with no horizontal overflow.
+- [x] Compress all six live crystal poses from 4.84 MB to 530 KB (89% smaller), retaining dimensions and transparency; 120 tests pass, preview build OK. Mobile/desktop hold → formation → corner, reload, scrolling, image loading and visible account-screen navigation verified with no runtime errors.
 - [ ] Physical iPhone/Android browser toolbar checks require real devices; browser simulation cannot verify native toolbar placement.
 
 ## Vinx logo
