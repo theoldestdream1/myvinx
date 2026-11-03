@@ -8,9 +8,9 @@ describe('V personality', () => {
     expect(getPersonality()).toBe('sassy');
   });
 
-  it('remembers the chosen personality', () => {
+  it('always stays sassy, even if an old choice was saved', () => {
     setPersonality('calm');
-    expect(getPersonality()).toBe('calm');
+    expect(getPersonality()).toBe('sassy');
   });
 
   it('never repeats the same listening prompt twice in a row', () => {

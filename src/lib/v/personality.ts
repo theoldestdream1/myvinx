@@ -122,11 +122,9 @@ export function __resetLines() { last = {}; }
 const KEY = 'vinx.v.personality';
 export const PERSONALITY_EVENT = 'vinx:v-personality';
 
+/** V has one fixed personality: her sassy default. Saved choices are ignored. */
 export function getPersonality(): Personality {
-  try {
-    const v = localStorage.getItem(KEY);
-    return v === 'sassy' || v === 'calm' || v === 'efficient' ? v : DEFAULT_PERSONALITY;
-  } catch { return DEFAULT_PERSONALITY; }
+  return DEFAULT_PERSONALITY;
 }
 export function setPersonality(p: Personality) {
   try { localStorage.setItem(KEY, p); } catch { /* ignore */ }
