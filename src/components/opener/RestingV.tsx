@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { loadPrefs, subscribePrefs } from '@/lib/avatar/prefs';
-import vSit from "@/assets/v-sit.png";
-import vWave from "@/assets/v-wave.png";
-import vHappy from "@/assets/v-happy.png";
-import vThink from "@/assets/v-think.png";
-import vListen from "@/assets/v-listen.png";
-import vSmug from "@/assets/v-smug.png";
+import vSit from "@/assets/v-sit.webp";
+import vWave from "@/assets/v-wave.webp";
+import vHappy from "@/assets/v-happy.webp";
+import vThink from "@/assets/v-think.webp";
+import vListen from "@/assets/v-listen.webp";
+import vSmug from "@/assets/v-smug.webp";
 import { REST, restHeight } from "./restingV";
 import { line } from "@/lib/v/personality";
 import type { Mood } from "@/lib/avatar/bus";
@@ -144,8 +144,8 @@ export function RestingV() {
         <motion.button
           key="home" type="button" onClick={goHome}
           initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-          className="fixed z-40 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
-          style={{ right: REST.margin, bottom: REST.margin }}
+          className="v-landing-seat fixed z-40 flex items-center gap-1.5 rounded-full border border-border/70 bg-card/90 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground shadow-md backdrop-blur-md"
+          style={{ right: REST.margin }}
           aria-label="Tap to bring V back to her seat" data-testid="v-home"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" aria-hidden />Tap to return
@@ -153,8 +153,8 @@ export function RestingV() {
       )}
     </AnimatePresence>
     <motion.div
-      className="pointer-events-none fixed z-40"
-      style={{ left: REST.margin, bottom: REST.margin, height: h, width: w }}
+      className="v-landing-seat pointer-events-none fixed z-40"
+      style={{ left: REST.margin, height: h, width: w }}
       animate={{ x, y: -rise - (talking ? 20 : 0), opacity: tp ? 0 : 1, scale: tp ? 0.5 : 1 }}
       transition={tp ? { x: { duration: 0 }, y: { duration: 0 }, opacity: { duration: 0.2 }, scale: { duration: 0.2 } } : act === "walk" ? { x: { duration: walkMs / 1000, ease: [0.45, 0, 0.35, 1] }, y: SPRING, opacity: { duration: 0.25 }, scale: SPRING } : { ...SPRING }}
       data-testid="resting-v"

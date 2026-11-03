@@ -8,12 +8,12 @@ import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useCaptureMemory } from "@/hooks/useCaptureMemory";
 import { line, getPersonality, PERSONALITY_EVENT, type Personality } from "@/lib/v/personality";
 import { vSpeak, vHush } from "@/lib/v/voice";
-import vSit from "@/assets/v-sit.png";
-import vWave from "@/assets/v-wave.png";
-import vHappy from "@/assets/v-happy.png";
-import vThink from "@/assets/v-think.png";
-import vListen from "@/assets/v-listen.png";
-import vSmug from "@/assets/v-smug.png";
+import vSit from "@/assets/v-sit.webp";
+import vWave from "@/assets/v-wave.webp";
+import vHappy from "@/assets/v-happy.webp";
+import vThink from "@/assets/v-think.webp";
+import vListen from "@/assets/v-listen.webp";
+import vSmug from "@/assets/v-smug.webp";
 import { Mic, Search, Bell, X, Check, Volume2, VolumeX } from "lucide-react";
 
 type Phase = "rest" | "menu" | "prompting" | "listening" | "transcribing" | "saving";

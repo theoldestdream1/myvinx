@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { TOUR_EVENT, TOUR_STOPS, finishTour, tourSeen } from '@/lib/v/tour';
 import { vAgent } from '@/lib/avatar/bus';
-import vWave from '@/assets/v-wave.png';
+import vWave from '@/assets/v-wave.webp';
 
 export function VTour() {
   const { user, loading } = useAuth();

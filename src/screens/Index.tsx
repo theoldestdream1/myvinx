@@ -109,7 +109,7 @@ export default function Index() {
   }, [user, loading, navigate]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-x-clip bg-background text-foreground">
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 aurora" />
       <div className="pointer-events-none absolute inset-0 v-grain" />
