@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import vWave from "@/assets/v-wave.png";
-import vSit from "@/assets/v-sit.png";
+import vWave from "@/assets/v-wave.webp";
+import vSit from "@/assets/v-sit.webp";
 import { REST, restRect } from "./restingV";
 
 /**
@@ -12,7 +12,7 @@ export const OPENER_KEY = "vinx.opener.v2";
 const HOLD_MS = 2400;
 const DECAY = 0.65;
 
-// eye centres in the cropped v-wave.png (495x990)
+// Eye centres in the original-size wave pose (495x990).
 const IMG_W = 495, IMG_H = 990;
 const EYES: [number, number][] = [[189, 247], [319, 247]];
 

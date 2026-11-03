@@ -125,6 +125,7 @@
   --elev-lit: inset 0 1px 0 var(--rim-strong), 0 0 0 1px oklch(0.90 0.008 250 / 0.22), 0 22px 50px -20px oklch(0.90 0.008 250 / 0.22), 0 2px 6px oklch(0 0 0 / 0.45);
   --sheen: linear-gradient(180deg, oklch(1 0 0 / 0.045), transparent 38%);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --v-landing-bottom: 14px;
 }
 
 @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -238,6 +239,10 @@
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 /* ---------- V opener ---------- */
+.v-landing-seat { bottom: var(--v-landing-bottom); }
+@media (max-width: 639px) {
+  :root { --v-landing-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
+}
 .v-opener-grain {
   opacity: 0.07;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
