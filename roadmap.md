@@ -1,5 +1,11 @@
 # Roadmap
 
+## Approved launch mobile fixes
+- [ ] Preserve Hold to Wake; lift landing V and her return button above phone bottom controls, including opener handoff.
+- [ ] Remove landing-page vertical scroll clipping without introducing horizontal overflow.
+- [ ] Compress all live crystal pose images to WebP; verify hold → formation → corner, reload, scrolling, and image loading on mobile and desktop.
+- [ ] Physical iPhone/Android browser toolbar checks require real devices; browser simulation cannot verify native toolbar placement.
+
 ## Vinx logo
 - [x] Apply final silver-eye upload across shared app branding, favicon, installed-app icons and notification badge; 105 tests pass, preview build OK, desktop/mobile logos and icon loading verified. Existing phone installs may refresh their icons later; physical OS icon refresh not verified.
 
