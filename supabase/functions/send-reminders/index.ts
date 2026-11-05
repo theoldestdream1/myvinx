@@ -36,12 +36,15 @@ serve(async (req) => {
         .from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("user_id", caller.userId);
       if (!subs?.length) return json({ error: "No devices registered. Enable notifications first." }, 404);
 
+      const { data: prof } = await supabase
+        .from("profiles").select("vibrate_pattern").eq("id", caller.userId).maybeSingle();
       const result = await sendToAll(subs as PushSub[], {
         type: "test",
         title: "Vinx notifications are on",
         body: "Reminders and your daily brief will show up here.",
         tag: "vinx-test",
         url: "/settings",
+        vibrate: prof?.vibrate_pattern ?? "buzz",
       }, dropGone, 300);
       return json({ devices: subs.length, ...result });
     }
@@ -57,6 +60,11 @@ serve(async (req) => {
     const userIds = [...new Set(due.map((d: any) => d.user_id))];
     const { data: allSubs } = await supabase
       .from("push_subscriptions").select("id, user_id, endpoint, p256dh, auth").in("user_id", userIds);
+
+    const { data: profs } = await supabase
+      .from("profiles").select("id, vibrate_pattern").in("id", userIds);
+    const vibrateByUser = new Map<string, string>();
+    for (const p of profs ?? []) vibrateByUser.set(p.id, p.vibrate_pattern ?? "buzz");
 
     const { data: tgLinks } = tgOn
       ? await supabase.from("channel_links").select("id, user_id, external_id").eq("channel", "telegram").eq("paused", false).in("user_id", userIds)
