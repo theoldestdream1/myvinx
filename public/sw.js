@@ -124,6 +124,7 @@ self.addEventListener('push', (event) => {
   }
 
   const isReminder = data.type === 'reminder';
+  const isTest = data.type === 'test';
   const actions = isReminder && data.token && data.actionUrl
     ? [
         { action: 'done', title: 'Done' },
@@ -144,10 +145,10 @@ self.addEventListener('push', (event) => {
       tag: data.tag || 'vinx',
       icon: '/icon-192.png',
       badge: '/badge-96.png',
-      requireInteraction: isReminder,
-      renotify: isReminder, // a nudge with the same tag still alerts again
+      requireInteraction: isReminder || isTest,
+      renotify: isReminder || isTest, // same-tag pushes must still pop and buzz again
       vibrate: shouldBuzz ? vibrate : undefined,
-      silent: isReminder ? !shouldBuzz : undefined,
+      silent: (isReminder || isTest) ? !shouldBuzz : undefined,
       actions,
       data: {
         url: data.url || '/dashboard',
