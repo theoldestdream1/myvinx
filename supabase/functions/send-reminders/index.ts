@@ -124,11 +124,55 @@ serve(async (req) => {
         token,
         actionUrl: `${SUPABASE_URL}/functions/v1/intent-action`,
         apikey: SUPABASE_ANON_KEY,
+        vibrate: vibrateByUser.get(d.user_id) ?? "buzz",
       }, dropGone, 6 * 3600);
       if (res.sent > 0 || viaTelegram || await emailFallback()) delivered++;
     }));
 
-    return json({ reminders: due.length, delivered, noDevice });
+    // ---- Re-nudge: reminders delivered but never Done/Snoozed ----------------
+    // Status stays 'reminded' until acknowledged; claim_stale_reminders allows
+    // at most 2 follow-ups, 30 minutes apart, so nothing nags forever.
+    let nudged = 0;
+    const { data: stale, error: staleErr } = await supabase.rpc("claim_stale_reminders", { _limit: 100 });
+    if (staleErr) {
+      console.error("claim_stale_reminders failed", staleErr);
+    } else if (stale?.length) {
+      const staleUserIds = [...new Set(stale.map((d: any) => d.user_id))];
+      const missing = staleUserIds.filter((id) => !byUser.has(id as string));
+      if (missing.length) {
+        const { data: moreSubs } = await supabase
+          .from("push_subscriptions").select("id, user_id, endpoint, p256dh, auth").in("user_id", missing);
+        for (const s of moreSubs ?? []) {
+          const list = byUser.get(s.user_id) ?? [];
+          list.push(s as PushSub);
+          byUser.set(s.user_id, list);
+        }
+        const { data: moreProfs } = await supabase
+          .from("profiles").select("id, vibrate_pattern").in("id", missing);
+        for (const p of moreProfs ?? []) vibrateByUser.set(p.id, p.vibrate_pattern ?? "buzz");
+      }
+
+      await Promise.all(stale.map(async (d: any) => {
+        const subs = byUser.get(d.user_id);
+        if (!subs?.length || !pushConfigured()) return;
+        const token = await signActionToken(d.id);
+        const res = await sendToAll(subs, {
+          type: "reminder",
+          title: `Still waiting: ${String(d.intent_text).slice(0, 80)}`,
+          body: "You haven't marked this done or snoozed it yet.",
+          tag: `intent-${d.id}`,
+          url: "/intents",
+          intentId: d.id,
+          token,
+          actionUrl: `${SUPABASE_URL}/functions/v1/intent-action`,
+          apikey: SUPABASE_ANON_KEY,
+          vibrate: vibrateByUser.get(d.user_id) ?? "buzz",
+        }, dropGone, 6 * 3600);
+        if (res.sent > 0) nudged++;
+      }));
+    }
+
+    return json({ reminders: due.length, delivered, noDevice, nudged });
   } catch (e) {
     console.error("send-reminders error", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
