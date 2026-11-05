@@ -398,6 +398,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           intent_text: string
+          nudge_count: number
           previous_occurrence_id: string | null
           priority: number | null
           raw_memory_id: string | null
@@ -419,6 +420,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           intent_text: string
+          nudge_count?: number
           previous_occurrence_id?: string | null
           priority?: number | null
           raw_memory_id?: string | null
@@ -440,6 +442,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           intent_text?: string
+          nudge_count?: number
           previous_occurrence_id?: string | null
           priority?: number | null
           raw_memory_id?: string | null
@@ -485,6 +488,7 @@ export type Database = {
           reminders_enabled: boolean
           timezone: string | null
           updated_at: string
+          vibrate_pattern: string
         }
         Insert: {
           avatar_url?: string | null
@@ -497,6 +501,7 @@ export type Database = {
           reminders_enabled?: boolean
           timezone?: string | null
           updated_at?: string
+          vibrate_pattern?: string
         }
         Update: {
           avatar_url?: string | null
@@ -509,6 +514,7 @@ export type Database = {
           reminders_enabled?: boolean
           timezone?: string | null
           updated_at?: string
+          vibrate_pattern?: string
         }
         Relationships: []
       }
@@ -720,6 +726,19 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_stale_reminders: {
+        Args: { _limit?: number }
+        Returns: {
+          id: string
+          intent_text: string
+          nudge_count: number
+          timezone: string
+          trigger_date: string
+          trigger_type: string
+          trigger_value: string
+          user_id: string
+        }[]
+      }
       claim_stuck_memories: {
         Args: { _limit?: number }
         Returns: {
@@ -824,6 +843,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           intent_text: string
+          nudge_count: number
           previous_occurrence_id: string | null
           priority: number | null
           raw_memory_id: string | null
