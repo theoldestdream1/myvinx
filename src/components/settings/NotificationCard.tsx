@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, BellOff, BellRing, Loader2 } from 'lucide-react';
+import { Bell, BellOff, BellRing, Loader2, Vibrate } from 'lucide-react';
 import { toast } from 'sonner';
+import { VIBRATE_LABELS, VibratePattern, isVibratePattern, previewVibration } from '@/lib/reminderAlerts';
 
 const BRIEF_HOURS = [6, 7, 8, 9, 10, 12];
 const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}`;
@@ -27,7 +28,7 @@ export function NotificationCard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('reminders_enabled, daily_brief_enabled, brief_hour')
+        .select('reminders_enabled, daily_brief_enabled, brief_hour, vibrate_pattern')
         .eq('id', user?.id ?? '')
         .maybeSingle();
       if (error) throw error;
@@ -36,7 +37,7 @@ export function NotificationCard() {
   });
 
   const updatePrefs = useMutation({
-    mutationFn: async (patch: { reminders_enabled?: boolean; daily_brief_enabled?: boolean; brief_hour?: number }) => {
+    mutationFn: async (patch: { reminders_enabled?: boolean; daily_brief_enabled?: boolean; brief_hour?: number; vibrate_pattern?: VibratePattern }) => {
       const { error } = await supabase.from('profiles').update(patch).eq('id', user?.id ?? '');
       if (error) throw error;
     },
@@ -169,7 +170,35 @@ export function NotificationCard() {
             </Select>
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Times use your local timezone. Notification sounds follow your device’s sound and Focus settings.</p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <Label className="flex items-center gap-1.5"><Vibrate className="h-3.5 w-3.5" /> Reminder buzz</Label>
+            <p className="text-xs text-muted-foreground">How your phone vibrates when a reminder lands.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              disabled={!canConfigure || updatePrefs.isPending}
+              value={isVibratePattern(prefs?.vibrate_pattern) ? prefs.vibrate_pattern : 'buzz'}
+              onValueChange={(v) => {
+                if (!isVibratePattern(v)) return;
+                updatePrefs.mutate({ vibrate_pattern: v });
+                if (v !== 'off' && !previewVibration(v)) {
+                  toast.info('This device does not support vibration preview — it will still buzz on phones that do.');
+                }
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(VIBRATE_LABELS) as VibratePattern[]).map((k) => (
+                  <SelectItem key={k} value={k}>{VIBRATE_LABELS[k]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Times use your local timezone. If a reminder is never marked Done or Snoozed, V nudges you again — up to twice, 30 minutes apart. Notification sounds follow your device’s sound and Focus settings.</p>
       </CardContent>
     </Card>
   );

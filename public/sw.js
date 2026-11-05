@@ -131,6 +131,12 @@ self.addEventListener('push', (event) => {
       ]
     : [];
 
+  // Vibration patterns — keep in sync with src/lib/reminderAlerts.ts
+  const VIBRATE = { buzz: [220, 90, 220, 90, 320], pulse: [120, 60, 120], off: [] };
+  const vibrate = VIBRATE[data.vibrate] || VIBRATE.buzz;
+  // Reminders and the test ping must buzz; anything else stays quiet.
+  const shouldBuzz = (isReminder || data.type === 'test') && vibrate.length > 0;
+
   // A push MUST show a notification (userVisibleOnly), so always do, even on odd payloads
   event.waitUntil(
     self.registration.showNotification(data.title || 'Vinx', {
@@ -139,6 +145,9 @@ self.addEventListener('push', (event) => {
       icon: '/icon-192.png',
       badge: '/badge-96.png',
       requireInteraction: isReminder,
+      renotify: isReminder, // a nudge with the same tag still alerts again
+      vibrate: shouldBuzz ? vibrate : undefined,
+      silent: isReminder ? !shouldBuzz : undefined,
       actions,
       data: {
         url: data.url || '/dashboard',
