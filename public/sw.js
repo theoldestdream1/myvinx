@@ -138,9 +138,16 @@ self.addEventListener('push', (event) => {
   // Reminders and the test ping must buzz; anything else stays quiet.
   const shouldBuzz = (isReminder || data.type === 'test') && vibrate.length > 0;
 
+  // Tell any open Vinx tab the push arrived, so it can confirm delivery and
+  // buzz in-page (Android 8+ ignores `vibrate` and uses the channel settings).
+  const tellPages = () =>
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      list.forEach((c) => c.postMessage({ type: 'vinx-push', kind: data.type || 'other', vibrate: shouldBuzz ? vibrate : [] }));
+    }).catch(() => {});
+
   // A push MUST show a notification (userVisibleOnly), so always do, even on odd payloads
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Vinx', {
+    Promise.all([tellPages(), self.registration.showNotification(data.title || 'Vinx', {
       body: data.body || '',
       tag: data.tag || 'vinx',
       icon: '/icon-192.png',
@@ -156,7 +163,7 @@ self.addEventListener('push', (event) => {
         actionUrl: data.actionUrl,
         apikey: data.apikey,
       },
-    }),
+    })]),
   );
 });
 
