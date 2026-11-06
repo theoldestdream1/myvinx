@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bell, BellOff, BellRing, Loader2, Vibrate } from 'lucide-react';
 import { toast } from 'sonner';
-import { VIBRATE_LABELS, VibratePattern, isVibratePattern, previewVibration } from '@/lib/reminderAlerts';
+import { VIBRATE_LABELS, VibratePattern, isAndroid, isVibratePattern, previewVibration, waitForPushArrival } from '@/lib/reminderAlerts';
 
 const BRIEF_HOURS = [6, 7, 8, 9, 10, 12];
 const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}`;
@@ -21,6 +21,7 @@ export function NotificationCard() {
   const push = usePushNotifications();
   const [testing, setTesting] = useState(false);
   const [testStatus, setTestStatus] = useState('');
+  const [arrival, setArrival] = useState<'idle' | 'arrived' | 'missing'>('idle');
 
   const { data: prefs, isError, refetch } = useQuery({
     queryKey: ['notification-prefs', user?.id],
@@ -47,13 +48,29 @@ export function NotificationCard() {
 
   const sendTest = async () => {
     setTesting(true);
+    setArrival('idle');
     setTestStatus('Sending test notification…');
+    const wait = waitForPushArrival('test', 15000);
     try {
       const { data, error } = await supabase.functions.invoke('send-reminders', { body: { test: true } });
       if (error) throw error;
-      if (!data?.sent) { setTestStatus('Test was not delivered. Turn notifications off and on, then retry.'); toast.error('The push service rejected the test. Try turning notifications off and on again.'); }
-      else { setTestStatus('Test sent. Check this device for the notification.'); toast.success('Test sent. It should arrive in a few seconds.'); }
+      if (!data?.sent) {
+        wait.cancel();
+        setTestStatus('Test was not delivered. Turn notifications off and on, then retry.');
+        toast.error('The push service rejected the test. Try turning notifications off and on again.');
+        return;
+      }
+      setTestStatus('Sent. Waiting for it to reach this phone…');
+      const arrived = await wait.promise;
+      if (arrived) {
+        setArrival('arrived');
+        setTestStatus('It reached this phone.');
+      } else {
+        setArrival('missing');
+        setTestStatus("Your phone hasn't received it after 15 seconds.");
+      }
     } catch (e) {
+      wait.cancel();
       const message = await functionErrorMessage(e, 'Could not send a test notification');
       setTestStatus(message); toast.error(message);
     } finally {
@@ -121,6 +138,35 @@ export function NotificationCard() {
       <CardContent className="space-y-5">
         {deviceControl}
         {testStatus && <p role="status" className="text-sm text-muted-foreground">{testStatus}</p>}
+        {arrival === 'arrived' && (
+          <div className="rounded-xl border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground space-y-1.5">
+            <p className="text-foreground font-medium">Didn't pop up or buzz?</p>
+            {isAndroid() ? (
+              <>
+                <p>Android decides how website alerts look and sound, so Vinx has to be allowed once:</p>
+                <ol className="list-decimal pl-5 space-y-1">
+                  <li>Pull down your notifications and long-press the Vinx one.</li>
+                  <li>Tap the gear or "Settings", then choose <b>Alerting</b> / <b>Default</b> (not Silent).</li>
+                  <li>Turn on <b>Pop on screen</b>, <b>Sound</b> and <b>Vibration</b>.</li>
+                  <li>Also make sure your phone isn't on silent or Do Not Disturb.</li>
+                </ol>
+                <p>Then send another test.</p>
+              </>
+            ) : (
+              <p>Check your phone's notification settings for Vinx (or your browser) and allow banners and sounds, and turn off Focus or Do Not Disturb.</p>
+            )}
+          </div>
+        )}
+        {arrival === 'missing' && (
+          <div className="rounded-xl border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground space-y-1.5">
+            <p className="text-foreground font-medium">The phone isn't receiving it</p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>In your phone's Settings → Apps → Chrome, set Battery to <b>Unrestricted</b> / no optimisation, and allow background data.</li>
+              <li>Check Chrome's notifications are allowed for this site.</li>
+              <li>Tap "Turn off on this device", then enable notifications again, and retry.</li>
+            </ol>
+          </div>
+        )}
         {isError && <div role="alert"><p className="text-sm text-destructive">Could not load notification preferences.</p><Button variant="outline" onClick={() => refetch()}>Retry preferences</Button></div>}
 
         <div className="flex items-center justify-between gap-4">

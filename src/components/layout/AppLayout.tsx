@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { buzzForArrival, isPushArrival } from '@/lib/reminderAlerts';
 import { Link } from "@/lib/router-compat";
 import { Sidebar } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -14,6 +15,15 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
+
+  // While Vinx is open, buzz in-page when a reminder or test push lands.
+  useEffect(() => {
+    const sw = typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined;
+    if (!sw) return;
+    const onMsg = (e: MessageEvent) => { if (isPushArrival(e.data)) buzzForArrival(e.data); };
+    sw.addEventListener('message', onMsg);
+    return () => sw.removeEventListener('message', onMsg);
+  }, []);
 
   return (
     <div className="min-h-screen flex bg-background">
